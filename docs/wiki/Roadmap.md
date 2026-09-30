@@ -1,0 +1,21 @@
+# Roadmap and limits
+
+The full plan is in [`docs/PLAN.md`](../PLAN.md).
+
+## Milestones
+
+- **M0, PTY layer:** done. Unix verified by tests; Windows compiles and needs a manual run.
+- **M1, agent API:** done. Create, list, kill, attach, scrollback replay, token auth.
+- **M2, hub:** mostly done. `hosts`, `ls`, `new`, `attach`, `kill` work. Still to come: an interactive TUI with a session list you can attach to and return from.
+- **M3, status and alerts:** next. Claude Code hooks will report `working`, `idle` and `needs_input`; the hub will show badges and ring the bell when a session needs you.
+- **M4, hardening:** agent as a system service, hub auto-reconnect, Windows Job Objects, a resize policy for multiple viewers.
+
+Later: split-pane views, mDNS discovery, a web frontend, TLS or Tailscale, sessions that survive agent restarts.
+
+## Known limits
+
+- Only sessions started through ccm are managed, not `claude` launched in a plain terminal.
+- Sessions stop when the agent stops. `claude --resume` recovers the conversation.
+- Status is `running` or `exited` only, until M3.
+- On Windows, killing a session doesn't yet kill claude's child processes.
+- With several viewers, the last resize wins.
