@@ -59,4 +59,8 @@ Alias: `a`. Takes over your terminal until you press **Ctrl-]**, the session exi
 
 Alias: `rm`. Asks the process to stop, forces it after 3 s, and removes the session from the agent. On Unix the whole process group gets the signal, so claude's children (MCP servers, shells) stop too.
 
+### `ccm web`
+
+Serves the browser UI on `127.0.0.1:7421` and opens it. Flags: `--listen` (loopback addresses only), `--no-open`, `--config`. See [Web UI](Web-UI.md).
+
 ### `ccm version`, `ccm help`

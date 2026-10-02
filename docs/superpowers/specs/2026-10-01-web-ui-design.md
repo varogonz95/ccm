@@ -1,6 +1,6 @@
 # Web UI for the ccm hub (`ccm web`)
 
-Issue: #5 (parent #4). Status: design approved in brainstorming, awaiting spec review.
+Issue: #5 (parent #4). Status: implemented (see docs/superpowers/plans/2026-10-01-web-ui.md).
 
 ## Goal
 
@@ -88,6 +88,16 @@ type HostOverview struct {
 }
 ```
 
+```go
+// Overview is the payload of the web UI's SSE "overview" event.
+type Overview struct {
+	ConfigPath string         `json:"config_path"`
+	Hosts      []HostOverview `json:"hosts"`
+}
+```
+
+`internal/hub/client.go`: non-2xx responses return `*hub.HTTPError{Code, Status, Msg}`.
+
 `HostOverview.URL` is shown on the card (address only); tokens are never part of any response.
 
 No agent changes. Agent `DELETE /v1/sessions/{id}` already stops a running session and forgets an exited one.
@@ -99,10 +109,11 @@ Every `/api` route requires the access key: `Authorization: Bearer <key>`, or `?
 | Route | Behaviour |
 |---|---|
 | `GET /`, `GET /static/*` | Embedded UI, no key needed. On load the page moves `?k=<key>` into localStorage and removes it from the address bar; with no key it shows "Open the link printed by `ccm web`". |
-| `GET /api/events` | `text/event-stream`. Event `overview` with `[]api.HostOverview` on connect and on every change. Comment ping every 20s. |
-| `POST /api/hosts/{host}/sessions` | Body `api.CreateRequest` → 201 `api.Session`. Unknown host 404. Agent errors relayed as `api.Error` with the agent's status. |
-| `DELETE /api/hosts/{host}/sessions/{id}` | → 204. Relays agent errors. |
-| `GET /api/hosts/{host}/sessions/{id}/attach` | WebSocket. Requires same-origin `Origin`. Dials agent via `hub.Client.Dial`; on dial failure closes with a close frame carrying the error text. |
+| `GET /api/events` | `text/event-stream`. Event `overview` with `api.Overview{config_path, hosts: []api.HostOverview}` on connect and on every change. Comment ping every 20s. |
+| `POST /api/hosts/{host}/sessions` | Body `api.CreateRequest` → 201 `api.Session`. Unknown host 404. Agent errors relayed as `api.Error` with the agent's status; if the agent rejects its token, 502 "access key rejected. Check hosts.toml.". |
+| `DELETE /api/hosts/{host}/sessions/{id}` | → 204. Relays agent errors (same 502 for a rejected token). |
+| any other `/api/*` | Needs the key like the rest; JSON 404 (catch-all). |
+| `GET /api/hosts/{host}/sessions/{id}/attach` | WebSocket. Requires same-origin `Origin`. Dials agent via `hub.Client.Dial`; on dial failure closes with a close frame carrying the error text. Close code 4404 when the agent has no such session, 4502 when the agent can't be reached. If the agent rejects its token, close 4502 with "access key rejected. Check hosts.toml." and the page stops retrying. The page resets the terminal and the backoff on the first message from the agent, not on socket open. |
 
 The key lives only in memory on the server; restarting `ccm web` invalidates it, and the page then shows "ccm web was restarted".
 
@@ -128,7 +139,7 @@ Four views, matching the design canvas. Wording targets non-terminal users: "mac
    - On WebSocket drop while the session still exists in the overview: "Disconnected, reconnecting…", retry with backoff (1s doubling to 10s); replay restores the screen.
 3. **New session** (dialog over the dashboard)
    - Machine radio cards (offline disabled), Folder (empty = agent's home), Name (optional), Advanced → Extra Claude arguments (split on whitespace).
-   - Sends current terminal-area size as `Cols`/`Rows`. On success navigates to the new session. Agent errors shown inline.
+   - Sends current terminal-area size as `Cols`/`Rows`. On success navigates to the new session. Agent errors shown inline. Routable as `#/new` and `#/new/<host>`.
 4. **First run** (no hosts configured)
    - Three steps: run `ccm agent`, copy the key with `ccm token`, add a `[[host]]` block to the hosts file (actual path from the server).
    - No "Check again" button (the canvas shows one): the poller re-reads `hosts.toml` when its modification time changes, so the page updates by itself once the file is saved. Copy: "This page updates by itself when you save the file."
