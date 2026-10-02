@@ -7,6 +7,7 @@
 //	ccm new <host> [flags] [-- claude args...]
 //	ccm attach <host>/<id>        attach; Ctrl-] detaches
 //	ccm kill <host>/<id>
+//	ccm web                       browser UI for every host and session
 package main
 
 import (
@@ -15,6 +16,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,6 +31,7 @@ import (
 	"ccm/internal/agent"
 	"ccm/internal/api"
 	"ccm/internal/hub"
+	"ccm/internal/web"
 )
 
 func main() {
@@ -53,6 +56,8 @@ func main() {
 		err = runAttach(args)
 	case "kill", "rm":
 		err = runKill(args)
+	case "web":
+		err = runWeb(args)
 	case "version":
 		fmt.Println("ccm", api.Version)
 	case "help", "-h", "--help":
@@ -81,6 +86,8 @@ hub side (run anywhere; reads hosts.toml):
   new <host> [--dir d] [--name n] [--detached] [-- claude args...]
   attach <host>/<id>                 attach (id prefix ok); Ctrl-] detaches
   kill <host>/<id>                   stop and remove a session
+  web [--listen 127.0.0.1:7421] [--no-open]
+                                     open the browser UI (loopback only)
 
 hub commands accept --config (default: `+hub.DefaultConfigPath()+`)
 `)
@@ -323,6 +330,54 @@ func runKill(args []string) error {
 		return err
 	}
 	fmt.Printf("killed %s/%s\n", hostName, id)
+	return nil
+}
+
+func runWeb(args []string) error {
+	fs, cfgPath := hubFlags("web")
+	listen := fs.String("listen", "127.0.0.1:7421", "loopback address for the web UI")
+	noOpen := fs.Bool("no-open", false, "print the URL without opening a browser")
+	parseInterspersed(fs, args)
+	if err := web.CheckLoopback(*listen); err != nil {
+		return err
+	}
+	ln, err := net.Listen("tcp", *listen)
+	if err != nil {
+		return err
+	}
+	secret := web.NewSecret()
+	srv, err := web.New(web.Options{
+		ConfigPath: *cfgPath,
+		Secret:     secret,
+		Port:       ln.Addr().(*net.TCPAddr).Port,
+	})
+	if err != nil {
+		ln.Close()
+		return err
+	}
+	httpSrv := &http.Server{Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		sctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if httpSrv.Shutdown(sctx) != nil {
+			_ = httpSrv.Close() // open event streams don't end on their own
+		}
+	}()
+
+	u := fmt.Sprintf("http://%s/?k=%s", ln.Addr(), secret)
+	fmt.Printf("ccm web: open %s\n(Ctrl-C to stop)\n", u)
+	if !*noOpen {
+		if err := web.OpenBrowser(u); err != nil {
+			fmt.Fprintf(os.Stderr, "ccm web: couldn't open a browser (%v); open the link above\n", err)
+		}
+	}
+	if err := httpSrv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
 	return nil
 }
 
