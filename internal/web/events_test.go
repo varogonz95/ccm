@@ -117,4 +117,10 @@ func TestSlowSubscriberDropped(t *testing.T) {
 	if n > subBuffer {
 		t.Fatalf("received %d events, buffer is %d", n, subBuffer)
 	}
+	b.mu.Lock()
+	stopped := b.cancel == nil
+	b.mu.Unlock()
+	if !stopped {
+		t.Fatal("poller still running after the last subscriber was dropped")
+	}
 }

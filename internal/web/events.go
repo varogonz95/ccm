@@ -65,6 +65,11 @@ func (b *broadcaster) unsubscribe(ch chan []byte) {
 	if _, ok := b.subs[ch]; !ok {
 		return // already dropped by sendLocked
 	}
+	b.removeLocked(ch)
+}
+
+// removeLocked drops a subscriber and stops the poller when none remain.
+func (b *broadcaster) removeLocked(ch chan []byte) {
 	delete(b.subs, ch)
 	close(ch)
 	if len(b.subs) == 0 && b.cancel != nil {
@@ -122,8 +127,7 @@ func (b *broadcaster) sendLocked(data []byte) {
 		select {
 		case ch <- data:
 		default:
-			delete(b.subs, ch)
-			close(ch)
+			b.removeLocked(ch)
 		}
 	}
 }
