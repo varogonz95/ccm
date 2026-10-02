@@ -371,8 +371,16 @@ func runWeb(args []string) error {
 	u := fmt.Sprintf("http://%s/?k=%s", ln.Addr(), secret)
 	fmt.Printf("ccm web: open %s\n(Ctrl-C to stop)\n", u)
 	if !*noOpen {
-		if err := web.OpenBrowser(u); err != nil {
-			fmt.Fprintf(os.Stderr, "ccm web: couldn't open a browser (%v); open the link above\n", err)
+		// The browser gets a private file that redirects to u, never u itself:
+		// a command line is visible to every local user.
+		if rd, err := web.WriteRedirect(u); err != nil {
+			fmt.Fprintf(os.Stderr, "ccm web: couldn't prepare the browser launch (%v); open the link above\n", err)
+		} else {
+			defer rd.Remove()
+			time.AfterFunc(30*time.Second, func() { _ = rd.Remove() })
+			if err := web.OpenBrowser(rd.URL()); err != nil {
+				fmt.Fprintf(os.Stderr, "ccm web: couldn't open a browser (%v); open the link above\n", err)
+			}
 		}
 	}
 	if err := httpSrv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {

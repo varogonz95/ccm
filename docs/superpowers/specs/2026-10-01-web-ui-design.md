@@ -56,7 +56,8 @@ browser ──key──▶ ccm web (127.0.0.1:7421) ──bearer──▶ agent 
 - Loads `hosts.toml` (default path as other hub commands). A missing file or one with no hosts is not an error: the UI shows the first-run screen. A file that fails to parse is a startup error.
 - While running, the poller re-reads `hosts.toml` when its modification time changes. A later parse error keeps the last good config and logs the error.
 - `--listen` must resolve to a loopback address; anything else is refused with a pointer to #6.
-- Generates a 32-byte random secret (hex), prints `ccm web: open http://127.0.0.1:7421/?k=<secret>` and, unless `--no-open`, opens that URL in the default browser.
+- Generates a 32-byte random secret (hex) and prints `ccm web: open http://127.0.0.1:7421/?k=<secret>`.
+- Unless `--no-open`, opens the browser without putting the key on a command line (other local users can read process arguments): it writes a redirect page (`<meta http-equiv="refresh">` plus a fallback link to the keyed URL, HTML-escaped) as `open.html` in a new private temp dir (`ccm-web-*`, 0700; file 0600; no key in the name), and opens that file's `file://` URL. The dir is removed after 30s and on exit. If the file can't be written, only the printed link is offered; the key is never passed to the opener. Snap browsers can't read temp files; the printed link is the fallback.
 - Runs until interrupted.
 
 ### Packages and files
@@ -70,6 +71,7 @@ browser ──key──▶ ccm web (127.0.0.1:7421) ──bearer──▶ agent 
 | `events.go` | SSE endpoint and broadcaster: one poller goroutine shared by all subscribers, started on first subscriber, stopped on last; pushes only when the overview changed; drops a subscriber whose buffer is full |
 | `attach.go` | Bridges browser WebSocket ↔ agent WebSocket; frames passed through unchanged; one writer goroutine per connection on each side |
 | `open_unix.go`, `open_windows.go` | Open a URL in the default browser (`xdg-open` / `open` on darwin via `runtime.GOOS`; `rundll32 url.dll,FileProtocolHandler` on Windows) |
+| `redirect.go` | Private short-lived redirect file handed to the opener instead of the keyed URL |
 | `static/` | `index.html`, `app.js`, `app.css`, `vendor/` (xterm.js, xterm.css, addon-fit.js, `VERSIONS` with pinned versions and source URLs) |
 
 `internal/hub/overview.go` (new): `Overview(ctx, hosts []Host) []api.HostOverview`. Queries health and session list for every host in parallel with a per-host timeout (3s). Replaces the fan-out currently inside `runHosts` and `runList` in `cmd/ccm/main.go`; both commands switch to it.

@@ -10,6 +10,8 @@ ccm web
 
 It prints a link like `http://127.0.0.1:7421/?k=…` and opens it in your default browser. Keep the terminal open; Ctrl-C stops the web UI (your sessions keep running on their machines).
 
+To keep the access key off the command line, the browser is opened through a short-lived private file that redirects to the link. If your browser can't read it (Snap browsers such as Ubuntu's default Firefox show "file not found"), open the printed link yourself.
+
 | Flag | Default | |
 |---|---|---|
 | `--listen` | `127.0.0.1:7421` | Loopback address to serve on. Other addresses are refused. |

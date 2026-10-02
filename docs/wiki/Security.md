@@ -23,7 +23,9 @@ Stop the agent, delete its `agent.token` (see [Configuration](Configuration.md))
 `ccm web` holds every token in `hosts.toml`, so it guards itself:
 
 - It listens on loopback only and refuses other `--listen` addresses.
-- Each launch makes a random access key. The printed link carries it to the page, which keeps it in the browser's storage for that exact address (port included) and removes it from the address bar. Every API request must carry it. Restarting `ccm web` invalidates the old key.
+- Each launch makes a random access key. The link printed in the terminal carries it to the page (terminal output is only visible to you), which keeps it in the browser's storage for that exact address (port included) and removes it from the address bar. Every API request must carry it. Restarting `ccm web` invalidates the old key.
+- The key never appears on a command line, where other users of the computer could read it. To open your browser, `ccm web` writes a private, short-lived redirect file (readable only by you, deleted after 30 seconds or when `ccm web` stops) and opens that file instead of the keyed link.
+- Browsers installed as Snaps (e.g. Ubuntu's default Firefox) can't read temporary files. If the browser shows "file not found", open the link printed in the terminal.
 - The key is deliberately not a cookie: browsers send a host's cookies to every port on it, so another user's server on another local port could collect one.
 - Requests whose `Host` isn't `127.0.0.1`/`localhost` on its port are refused (DNS rebinding). WebSockets and write requests from other origins are refused (cross-site requests).
 - The browser never receives tokens or talks to agents directly.
