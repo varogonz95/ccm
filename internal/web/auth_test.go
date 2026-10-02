@@ -88,6 +88,11 @@ func TestForeignHostRejected(t *testing.T) {
 		"evil.example:" + port: http.StatusForbidden, // DNS rebinding
 		"127.0.0.1:1":          http.StatusForbidden,
 		"localhost:" + port:    http.StatusOK,
+		"[::1]:" + port:        http.StatusOK,
+		"127.0.0.1":            http.StatusForbidden, // no port
+		"localhost":            http.StatusForbidden, // no port
+		"localhost.:" + port:   http.StatusForbidden, // trailing dot
+		"LOCALHOST:" + port:    http.StatusForbidden, // case
 	}
 	for host, want := range cases {
 		req, _ := http.NewRequest(http.MethodGet, base+"/", nil)
@@ -117,6 +122,10 @@ func TestAPIGuard(t *testing.T) {
 		{"cookie, no origin", true, "", http.StatusNoContent},
 		{"cookie, own origin", true, own, http.StatusNoContent},
 		{"cookie, foreign origin", true, "http://evil.example", http.StatusForbidden},
+		{"cookie, own host other port", true, fmt.Sprintf("http://127.0.0.1:%d", s.port+1), http.StatusForbidden},
+		{"cookie, null origin", true, "null", http.StatusForbidden},
+		{"cookie, https scheme", true, fmt.Sprintf("https://127.0.0.1:%d", s.port), http.StatusForbidden},
+		{"cookie, localhost origin", true, fmt.Sprintf("http://localhost:%d", s.port), http.StatusNoContent},
 	}
 	for _, tc := range cases {
 		req := httptest.NewRequest(http.MethodPost, "/api/x", nil)
