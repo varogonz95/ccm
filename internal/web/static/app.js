@@ -36,6 +36,7 @@ const state = {
   overview: null,       // {config_path, config_error?, hosts}, from the last SSE event
   live: 'connecting',   // connecting | live | reconnecting | signed-out
   view: null,           // the open session, see openSession
+  dismissing: new Set(), // "host/id" of exited sessions being dismissed
 };
 let newDialog = null;
 
@@ -166,7 +167,12 @@ function connectEvents() {
 // ---------- routing ----------
 
 function parseRoute() {
-  const parts = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  let parts;
+  try {
+    parts = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  } catch (_) {
+    return { name: 'home' }; // a malformed hash, e.g. a stray "%"
+  }
   if (parts[0] === 's' && parts.length === 3) return { name: 'session', host: parts[1], id: parts[2] };
   if (parts[0] === 'new') return { name: 'new', host: parts[1] || null };
   return { name: 'home' };
@@ -258,7 +264,10 @@ function sessionRow(hostName, s) {
       h('span', { class: 'grow' },
         h('span', { class: 'row-title muted' }, label),
         h('span', { class: 'mono small muted' }, `Exited · code ${s.exit_code}`)),
-      h('button', { class: 'btn ghost small', type: 'button', 'data-key': `dismiss:${hostName}/${s.id}`, onclick: () => dismiss(hostName, s) }, 'Dismiss'));
+      h('button', {
+        class: 'btn ghost small', type: 'button', 'data-key': `dismiss:${hostName}/${s.id}`,
+        disabled: state.dismissing.has(`${hostName}/${s.id}`), onclick: () => dismiss(hostName, s),
+      }, 'Dismiss'));
   }
   return h('a', { class: 'row', href: `#/s/${encodeURIComponent(hostName)}/${encodeURIComponent(s.id)}`, 'data-key': `row:${hostName}/${s.id}` },
     h('span', { class: 'dot ok' }),
@@ -270,9 +279,16 @@ function sessionRow(hostName, s) {
 }
 
 async function dismiss(hostName, s) {
+  const key = `${hostName}/${s.id}`;
+  if (state.dismissing.has(key)) return;
+  state.dismissing.add(key); // kept across re-renders until the request ends
+  render();
   try {
     await api('DELETE', sessionPath(hostName, s.id));
+    state.dismissing.delete(key); // the next overview drops the row
   } catch (e) {
+    state.dismissing.delete(key);
+    render();
     toast(`Couldn't dismiss ${sessionLabel(s)}: ${e.message}`);
   }
 }
@@ -511,8 +527,9 @@ function connect(v) {
       return;
     }
     v.conn = 'reconnecting';
-    setBanner(v, h('div', { class: 'banner', role: 'status' }, e.code === CLOSE_UNREACHABLE
-      ? `Can't reach ${v.host}: ${e.reason}. Retrying…` : 'Disconnected, reconnecting…'));
+    let text = 'Disconnected, reconnecting…';
+    if (e.code === CLOSE_UNREACHABLE) text = e.reason ? `Can't reach ${v.host}: ${e.reason}. Retrying…` : `Can't reach ${v.host}. Retrying…`;
+    setBanner(v, h('div', { class: 'banner', role: 'status' }, text));
     renderSessionChrome();
     v.timer = setTimeout(() => connect(v), v.backoff);
     v.backoff = Math.min(v.backoff * 2, 10000);

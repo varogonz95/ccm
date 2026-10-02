@@ -94,6 +94,10 @@ func (s *Server) serveIndex(w http.ResponseWriter, _ *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
+	// No framing by other pages. Only frame-ancestors: a script or style
+	// policy could break xterm.js.
+	w.Header().Set("X-Frame-Options", "DENY")
+	w.Header().Set("Content-Security-Policy", "frame-ancestors 'none'")
 	_, _ = w.Write(b)
 }
 

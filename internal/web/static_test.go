@@ -40,3 +40,19 @@ func TestStaticAssetsServed(t *testing.T) {
 		read("/static/" + m[1])
 	}
 }
+
+// The page must not be framed by another site (clickjacking).
+func TestIndexNotFramable(t *testing.T) {
+	_, base := startServer(t, noHosts(t))
+	resp, err := http.Get(base + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if got := resp.Header.Get("X-Frame-Options"); got != "DENY" {
+		t.Errorf("X-Frame-Options = %q, want DENY", got)
+	}
+	if got := resp.Header.Get("Content-Security-Policy"); got != "frame-ancestors 'none'" {
+		t.Errorf("Content-Security-Policy = %q, want frame-ancestors 'none'", got)
+	}
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"time"
+	"unicode/utf8"
 
 	"github.com/gorilla/websocket"
 
@@ -57,20 +58,27 @@ func (s *Server) attach(w http.ResponseWriter, r *http.Request) {
 // is the only writer of its destination connection.
 func bridge(browser, agentConn *websocket.Conn) {
 	done := make(chan struct{}, 2)
-	go func() { pipe(agentConn, browser); done <- struct{}{} }()
-	go func() { pipe(browser, agentConn); done <- struct{}{} }()
+	go func() { pipe(agentConn, browser, websocket.CloseNormalClosure); done <- struct{}{} }()
+	go func() { pipe(browser, agentConn, closeUnreachable); done <- struct{}{} }()
 	<-done // the caller's deferred Close calls unblock the other direction
 }
 
 // pipe copies frames from src to dst until src fails. A close frame from src
-// is passed on, so the agent's "session exited" reaches the browser.
-func pipe(dst, src *websocket.Conn) {
+// is passed on, so the agent's "session exited" reaches the browser. Codes
+// that are never sent on the wire (1005 no status, 1006 abnormal closure,
+// 1015 TLS failure) are replaced by lost, the code dst gets when src is gone.
+func pipe(dst, src *websocket.Conn, lost int) {
 	for {
 		mt, data, err := src.ReadMessage()
 		if err != nil {
 			var ce *websocket.CloseError
 			if errors.As(err, &ce) {
-				closeWith(dst, ce.Code, ce.Text)
+				switch ce.Code {
+				case websocket.CloseNoStatusReceived, websocket.CloseAbnormalClosure, websocket.CloseTLSHandshake:
+					closeWith(dst, lost, "")
+				default:
+					closeWith(dst, ce.Code, ce.Text)
+				}
 			}
 			return
 		}
@@ -80,10 +88,23 @@ func pipe(dst, src *websocket.Conn) {
 	}
 }
 
+// maxCloseReason keeps a close frame within its 125-byte payload limit
+// (2 bytes of code plus the reason).
+const maxCloseReason = 120
+
 // closeWith sends a close frame. WriteControl is safe alongside the writer.
 func closeWith(c *websocket.Conn, code int, reason string) {
-	if len(reason) > 120 { // close frame payloads are limited to 125 bytes
-		reason = reason[:120]
+	_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(code, truncateUTF8(reason, maxCloseReason)), time.Now().Add(time.Second))
+}
+
+// truncateUTF8 cuts s to at most n bytes without splitting a rune, since a
+// close reason must be valid UTF-8.
+func truncateUTF8(s string, n int) string {
+	if len(s) <= n {
+		return s
 	}
-	_ = c.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(code, reason), time.Now().Add(time.Second))
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
