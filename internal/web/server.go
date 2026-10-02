@@ -8,6 +8,7 @@ package web
 import (
 	"embed"
 	"encoding/json"
+	"errors"
 	"io/fs"
 	"net/http"
 	"time"
@@ -21,26 +22,28 @@ var staticFiles embed.FS
 // Options configures a Server.
 type Options struct {
 	ConfigPath string        // hosts.toml; a missing file means no hosts yet
-	Secret     string        // from NewSecret; carried once by the opened URL
+	Secret     string        // access key from NewSecret; required
 	Port       int           // port the server listens on, for the Host check
 	PollEvery  time.Duration // agent polling interval while a browser is connected; 0 means 2s
 }
 
 type Server struct {
 	hosts  *hostsFile
-	secret string
-	cookie string // session cookie value, distinct from the secret
+	secret string // the access key
 	port   int
 }
 
 // New loads hosts.toml and prepares the server. A missing file is fine (the
 // UI shows the first-run screen); a file that doesn't parse is an error.
 func New(o Options) (*Server, error) {
+	if o.Secret == "" {
+		return nil, errors.New("web: empty access key")
+	}
 	hosts, err := loadHostsFile(o.ConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	return &Server{hosts: hosts, secret: o.Secret, cookie: randHex(32), port: o.Port}, nil
+	return &Server{hosts: hosts, secret: o.Secret, port: o.Port}, nil
 }
 
 // Handler returns every route behind the Host check.
@@ -51,8 +54,13 @@ func (s *Server) Handler() http.Handler {
 func (s *Server) routes() *http.ServeMux {
 	static, _ := fs.Sub(staticFiles, "static")
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", s.index)
-	mux.Handle("GET /static/", s.page(http.StripPrefix("/static/", http.FileServerFS(static))))
+	// The page and its assets hold no secrets; everything that does is under /api.
+	mux.HandleFunc("GET /{$}", s.serveIndex)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
+	// Unknown /api paths still demand the key, and answer in JSON.
+	mux.Handle("/api/", s.api(func(w http.ResponseWriter, _ *http.Request) {
+		writeErr(w, http.StatusNotFound, errors.New("not found"))
+	}))
 	return mux
 }
 

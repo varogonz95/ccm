@@ -14,16 +14,19 @@ import (
 	"strings"
 )
 
-const cookieName = "ccm_web"
-
 const (
-	msgNoCookie  = "Open the link printed by ccm web in your terminal."
-	msgBadSecret = "This link is out of date. Open the link printed by ccm web in your terminal."
+	msgNoKey     = "Open the link printed by ccm web in your terminal."
 	msgBadHost   = "This address isn't allowed. Open the link printed by ccm web in your terminal."
 	msgBadOrigin = "Requests from other sites are not allowed."
 )
 
-// NewSecret returns the per-launch secret for the URL that ccm web opens.
+// NewSecret returns the per-launch access key. The URL that ccm web opens
+// carries it to the page, which keeps it in localStorage and sends it with
+// every API request.
+//
+// It is deliberately not a cookie: browsers send a host's cookies to every
+// port on it, so another local user's server on 127.0.0.1:<other port> could
+// collect one. localStorage is scoped to the exact origin, port included.
 func NewSecret() string { return randHex(32) }
 
 func randHex(n int) string {
@@ -32,24 +35,6 @@ func randHex(n int) string {
 		panic(err) // crypto/rand does not fail on supported platforms
 	}
 	return hex.EncodeToString(b)
-}
-
-// index exchanges ?k=<secret> for the session cookie, or serves the app.
-func (s *Server) index(w http.ResponseWriter, r *http.Request) {
-	k := r.URL.Query().Get("k")
-	if k == "" {
-		s.page(http.HandlerFunc(s.serveIndex)).ServeHTTP(w, r)
-		return
-	}
-	if subtle.ConstantTimeCompare([]byte(k), []byte(s.secret)) != 1 {
-		deny(w, r, http.StatusUnauthorized, msgBadSecret)
-		return
-	}
-	http.SetCookie(w, &http.Cookie{
-		Name: cookieName, Value: s.cookie, Path: "/",
-		HttpOnly: true, SameSite: http.SameSiteStrictMode,
-	})
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // checkHost rejects requests whose Host is not this server on loopback.
@@ -83,29 +68,27 @@ func (s *Server) ownOrigin(origin string) bool {
 	return err == nil && u.Scheme == "http" && s.ownHost(u.Host)
 }
 
-func (s *Server) hasCookie(r *http.Request) bool {
-	c, err := r.Cookie(cookieName)
-	return err == nil && subtle.ConstantTimeCompare([]byte(c.Value), []byte(s.cookie)) == 1
+// keyFrom returns the access key from "Authorization: Bearer <key>", or from
+// ?k=<key> for EventSource and WebSocket, which can't set headers.
+func keyFrom(r *http.Request) string {
+	if k, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok {
+		return k
+	}
+	return r.URL.Query().Get("k")
 }
 
-// page guards the HTML and static routes.
-func (s *Server) page(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.hasCookie(r) {
-			deny(w, r, http.StatusUnauthorized, msgNoCookie)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func (s *Server) hasKey(r *http.Request) bool {
+	k := keyFrom(r)
+	return k != "" && subtle.ConstantTimeCompare([]byte(k), []byte(s.secret)) == 1
 }
 
-// api guards /api routes: the cookie, plus a same-origin Origin whenever the
-// browser sends one. WebSocket upgrades must carry Origin; the upgrader
+// api guards /api routes: the access key, plus a same-origin Origin whenever
+// the browser sends one. WebSocket upgrades must carry Origin; the upgrader
 // checks that separately.
 func (s *Server) api(next http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.hasCookie(r) {
-			deny(w, r, http.StatusUnauthorized, msgNoCookie)
+		if !s.hasKey(r) {
+			deny(w, r, http.StatusUnauthorized, msgNoKey)
 			return
 		}
 		if o := r.Header.Get("Origin"); o != "" && !s.ownOrigin(o) {

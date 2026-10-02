@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/http/cookiejar"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -88,20 +87,19 @@ func startServer(t *testing.T, cfgPath string) (*Server, string) {
 	return s, ts.URL
 }
 
-// login returns a client holding the session cookie.
+// keyTransport sends the access key the way the page's fetch calls do.
+type keyTransport struct{ key string }
+
+func (k keyTransport) RoundTrip(r *http.Request) (*http.Response, error) {
+	r = r.Clone(r.Context())
+	r.Header.Set("Authorization", "Bearer "+k.key)
+	return http.DefaultTransport.RoundTrip(r)
+}
+
+// login returns a client that sends the access key with every request.
 func login(t *testing.T, base string) *http.Client {
 	t.Helper()
-	jar, _ := cookiejar.New(nil)
-	c := &http.Client{Jar: jar}
-	resp, err := c.Get(base + "/?k=" + testSecret)
-	if err != nil {
-		t.Fatal(err)
-	}
-	resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("login: %s", resp.Status)
-	}
-	return c
+	return &http.Client{Transport: keyTransport{testSecret}}
 }
 
 func status(t *testing.T, c *http.Client, url string) int {
@@ -178,10 +176,12 @@ func createViaWeb(t *testing.T, c *http.Client, base, host string) api.Session {
 	return s
 }
 
-// dialAttach opens the web attach WebSocket. host must already be path-escaped.
-func dialAttach(c *http.Client, base, host, id, origin string) (*websocket.Conn, *http.Response, error) {
-	u := "ws" + strings.TrimPrefix(base, "http") + "/api/hosts/" + host + "/sessions/" + id + "/attach"
-	d := websocket.Dialer{Jar: c.Jar, HandshakeTimeout: 5 * time.Second}
+// dialAttach opens the web attach WebSocket with the key in the query, as
+// the page does (browsers can't set headers on WebSockets). host must
+// already be path-escaped.
+func dialAttach(base, host, id, origin string) (*websocket.Conn, *http.Response, error) {
+	u := "ws" + strings.TrimPrefix(base, "http") + "/api/hosts/" + host + "/sessions/" + id + "/attach?k=" + testSecret
+	d := websocket.Dialer{HandshakeTimeout: 5 * time.Second}
 	hdr := http.Header{}
 	if origin != "" {
 		hdr.Set("Origin", origin)
