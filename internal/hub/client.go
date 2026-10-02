@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -97,10 +96,25 @@ func (c *Client) do(ctx context.Context, method, path string, in, out any) error
 	return nil
 }
 
-func decodeErr(resp *http.Response) error {
-	var e api.Error
-	if json.NewDecoder(resp.Body).Decode(&e) == nil && e.Error != "" {
-		return fmt.Errorf("%s: %s", resp.Status, e.Error)
+// HTTPError is a non-2xx response from an agent.
+type HTTPError struct {
+	Code   int    // HTTP status code
+	Status string // e.g. "404 Not Found"
+	Msg    string // the agent's api.Error message; may be empty
+}
+
+func (e *HTTPError) Error() string {
+	if e.Msg != "" {
+		return e.Status + ": " + e.Msg
 	}
-	return fmt.Errorf("%s", resp.Status)
+	return e.Status
+}
+
+func decodeErr(resp *http.Response) error {
+	he := &HTTPError{Code: resp.StatusCode, Status: resp.Status}
+	var e api.Error
+	if json.NewDecoder(resp.Body).Decode(&e) == nil {
+		he.Msg = e.Error
+	}
+	return he
 }
