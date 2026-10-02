@@ -65,6 +65,8 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("GET /{$}", s.serveIndex)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
 	mux.Handle("GET /api/events", s.api(s.events))
+	mux.Handle("POST /api/hosts/{host}/sessions", s.api(s.create))
+	mux.Handle("DELETE /api/hosts/{host}/sessions/{id}", s.api(s.remove))
 	// Unknown /api paths still demand the key, and answer in JSON.
 	mux.Handle("/api/", s.api(func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, errors.New("not found"))
