@@ -2,3 +2,6 @@
 /ccm
 /ccm.exe
 *.test
+/.worktrees/
+/.claude/worktrees/
+/reminders/

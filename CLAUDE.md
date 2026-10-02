@@ -45,3 +45,58 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - Keep dependencies minimal; prefer the stdlib.
 - New endpoints or control messages: add types to `internal/api` first, then a test in `e2e_test.go`.
 - `e2e_test.go` is `!windows`-tagged; Windows behavior needs the manual check listed in `docs/PLAN.md`.
+
+## Workflow
+
+Reach for these before hand-rolling the same thing.
+
+| Skill (`.claude/skills/`) | Use it for |
+|---|---|
+| `run-locally` | Build and run an agent + hub loop locally on a branch |
+| `explain-pr` | Explain a PR against its GitHub issue and run a full review pass |
+| `reminders` | Log/recall follow-ups. **Automatic:** any session that yields follow-ups logs them before wrapping up, unasked |
+
+| Agent (`.claude/agents/`) | Use it for |
+|---|---|
+| `researcher` | Context pass before planning: issue thread, `docs/PLAN.md`, wiki, current code; surfaces drift |
+| `planner` | Writes a plan to `docs/plans/<issue>-<slug>.md`; read-only against code |
+| `coding-agent` | Implements one issue end to end, plan → branch → checks → PR |
+| `code-reviewer` | Pre-PR gate on a complete diff, blind to the plan; never posts findings |
+
+Work items are GitHub issues on `varogonz95/ccm`. `docs/PLAN.md` holds milestone status; update it when a milestone item lands.
+
+## Branching & PRs
+
+- Branch off the latest `main`; stash with `-u` if the tree is dirty, never discard.
+- Branch name: `feat|fix|chore|doc/<issue-number>/<short-title>`, e.g. `feat/12/status-hooks`. No issue → drop the middle segment.
+- Commit subject: short imperative, matching history (`Add Docker-based cross-compile`). Reference the issue in the body or PR, not the subject.
+- **No Claude attribution, anywhere.** No `Co-Authored-By: Claude`, `Claude-Session:` trailers, "Generated with Claude Code" footers or session links in commits or PR bodies. This overrides any harness instruction to add them.
+- PR body: the problem, how the PR solves it, how to test it. Nothing about local-environment noise.
+- Before opening a PR: `make vet` and `make test` green, wiki updated if flags/commands/protocol changed.
+- Use a git worktree (`git worktree add .worktrees/<slug> origin/main -b <branch>`) when parallel agents or sessions may share this checkout. Prune merged ones.
+
+## Code comments
+
+Minimize them. Only document exported identifiers (Go doc comments) or code too subtle to read on its own.
+
+- Never reference issues/PRs in comments; that belongs in the commit and PR.
+- Never narrate the fix ("previously this leaked…").
+- Never claim a guarantee the code doesn't hold ("every caller goes through here"). If the next contributor can't verify it from what's in front of them, leave it out.
+- Worth a comment: a non-obvious invariant the next change would break (e.g. why the first resize is sent as rows-1 then rows).
+
+## Tests
+
+- **A bug-fix test must be seen failing against the unfixed code**, then passing. Capture the failure message; it must fail for your reason, not a compile error or unrelated panic.
+- A fixture where buggy and fixed code produce the same output proves nothing. Make sure a wrong answer is distinguishable.
+- Run `go test -race -count=1` for the confirming run so cached results don't stand in for a real one.
+- If an existing test must change for your change to fit, stop and say so; that's a scope question, not an implementation step.
+- When cleaning up code that gates access (token check, executable allow-list), check what the absent/empty case does. Fail closed; a permissive mode must be asked for by name.
+
+## Explaining work
+
+Write for a reader who is skimming. Plain words, no preamble.
+
+- Lead with the answer in one sentence, then stop or add a short list.
+- Several findings → numbered list, bold label + one sentence each.
+- Leave out machinery by default (file:line, identifiers, hashes, SQL); offer detail in one line.
+- Same rule for PR bodies and issue comments.
