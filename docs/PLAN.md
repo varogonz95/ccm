@@ -15,6 +15,7 @@ Goal: one terminal on any PC shows every Claude Code session on every LAN machin
 - [x] **M0, PTY spike.** Spawn in a PTY, I/O, resize, exit codes. Unix verified by tests; Windows compiles, needs a manual run.
 - [x] **M1, agent API.** REST create/list/kill, WebSocket attach, scrollback replay, token auth, repaint nudge on attach.
 - [~] **M2, hub.** Done: `hosts.toml`, `hosts`, `ls` across machines, `new`, `attach`, `kill`. Todo: bubbletea TUI (session list + attach + return to list), which needs a cancellable stdin reader.
+- [~] **Auto-agent PoC** (`docs/poc-auto-agent.md`). Claude Code plugin + `ccm mcp` stub: spawns a detached agent if none runs, and announces sessions started outside ccm (`/v1/external` leases, `external` in `ls`). Linux verified; Windows/macOS need the manual check in that doc.
 - [ ] **M3, status and alerts.** Agent launches claude with `--settings` injecting `Stop`, `Notification`, `UserPromptSubmit` hooks that run `ccm hook <event>` (reads `CCM_SESSION_ID`, posts to the agent). New states: working, idle, needs_input. Hub shows badges and rings the bell on needs_input.
 - [ ] **M4, hardening.** Agent as a service (systemd, launchd, Windows Service); hub auto-reconnect; Windows Job Object; multiple-viewer resize policy.
 

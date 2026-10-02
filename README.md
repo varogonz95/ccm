@@ -54,7 +54,7 @@ Anyone holding an agent's token can run Claude Code on that machine, with that m
 
 ## Known limits (MVP)
 
-- Only manages sessions started through ccm, not `claude` launched in a plain terminal.
+- Only manages sessions started through ccm. With the experimental [Claude Code plugin](docs/wiki/Plugin.md), `claude` launched in a plain terminal is listed as `external`, but can't be attached to.
 - Sessions stop when the agent stops. `claude --resume` recovers the conversation.
 - Status is `running` / `exited`. Working / idle / needs-input arrives with M3.
 - Windows: killing a session doesn't yet kill claude's child processes (Job Object TODO).

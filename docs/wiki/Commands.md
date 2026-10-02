@@ -27,6 +27,10 @@ The executable is fixed here. The API only lets clients add arguments, never cho
 
 Prints the agent's token, creating it if needed. Accepts `--token-file`.
 
+### `ccm mcp`
+
+An MCP stdio server with no tools, run by Claude Code through the [plugin](Plugin.md). It starts a detached agent if none answers, and announces the session to the agent. Flags are listed on the plugin page.
+
 ## Hub side
 
 Run these anywhere. All accept `--config` (default `<config dir>/ccm/hosts.toml`; `ccm help` prints the exact path).
@@ -39,7 +43,7 @@ Checks every configured agent: health, then an authenticated call. Timeout is 3 
 
 ### `ccm ls [host]`
 
-Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (`running` or `exited(code)`), `VIEWERS`, `AGE`, `DIR`. Unreachable hosts are reported on stderr after the table.
+Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (`running`, `exited(code)`, or `external` for sessions announced by the [plugin](Plugin.md)), `VIEWERS`, `AGE`, `DIR`. Unreachable hosts are reported on stderr after the table.
 
 ### `ccm new <host> [flags] [-- claude args...]`
 

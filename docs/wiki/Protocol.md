@@ -21,6 +21,9 @@ Failures return `401` with `{"error":"unauthorized"}`. All errors use `{"error":
 | `POST` | `/v1/sessions` | Create a session |
 | `DELETE` | `/v1/sessions/{id}` | Stop and remove a session |
 | `GET` | `/v1/sessions/{id}/attach` | WebSocket upgrade |
+| `GET` | `/v1/external` | Array of external sessions, oldest first |
+| `PUT` | `/v1/external/{id}` | Announce or renew an external session |
+| `DELETE` | `/v1/external/{id}` | Withdraw an external session |
 
 `{id}` may be a unique prefix. An ambiguous prefix or unknown ID is an error.
 
@@ -48,6 +51,17 @@ Failures return `401` with `{"error":"unauthorized"}`. All errors use `{"error":
 ```
 
 All fields are optional. `dir` defaults to the agent user's home and `~` is expanded on the agent. Size defaults to 120×40. There is no field for the executable; that is fixed by the agent's `--claude` flag.
+
+### External sessions
+
+Claude sessions the agent doesn't own, announced by `ccm mcp` (see [Claude Code plugin](Plugin.md)). They're listed only; you can't attach to them or kill them.
+
+`PUT /v1/external/{id}` takes `{"name","dir","pid"}`, all optional; `name` defaults to the basename of `dir`. The caller picks the `{id}`: 1–64 characters of `[0-9a-zA-Z_-]`. The call is an upsert, and each one renews a lease. The agent forgets entries not renewed within 90 s.
+
+```json
+{ "id": "aecd9193be8d78aa", "name": "api", "dir": "/home/alvaro/src/api", "pid": 5120,
+  "created": "2026-10-02T02:10:39Z", "seen": "2026-10-02T02:11:09Z" }
+```
 
 ## Attach WebSocket
 
