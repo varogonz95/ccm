@@ -33,7 +33,7 @@ const ICONS = {
 
 const app = document.getElementById('app');
 const state = {
-  overview: null,       // {config_path, hosts}, from the last SSE event
+  overview: null,       // {config_path, config_error?, hosts}, from the last SSE event
   live: 'connecting',   // connecting | live | reconnecting | signed-out
   view: null,           // the open session, see openSession
 };
@@ -214,8 +214,16 @@ function renderHome() {
   let body;
   if (!ov) body = h('p', { class: 'muted' }, 'Looking for your machines…');
   else if (ov.hosts.length === 0) body = firstRun(ov);
-  else body = dashboard(ov);
+  else body = [configError(ov), ...dashboard(ov)];
   keepFocus(() => app.replaceChildren(topbar(), h('main', { class: 'page' }, body)));
+}
+
+// configError explains why hosts.toml was not applied; the hosts shown are
+// the last ones that parsed.
+function configError(ov) {
+  if (!ov.config_error) return null;
+  return h('div', { class: 'banner config-error', role: 'alert' },
+    `Your hosts file has an error: ${ov.config_error}. Fix it and save; this page updates by itself.`);
 }
 
 function dashboard(ov) {
@@ -289,6 +297,7 @@ function offlineCard(host) {
 function firstRun(ov) {
   const step = (n, ...body) => h('li', { class: 'step' }, h('span', { class: 'step-n' }, String(n)), h('div', { class: 'grow' }, body));
   return h('div', { class: 'first-run' },
+    configError(ov),
     h('h1', {}, 'No machines yet'),
     h('p', { class: 'muted' }, 'ccm shows the machines listed in your hosts file. Add one in three steps:'),
     h('ol', { class: 'steps' },

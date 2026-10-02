@@ -247,7 +247,11 @@ func runList(args []string) error {
 		return err
 	}
 	for _, r := range failed {
-		fmt.Fprintf(os.Stderr, "! %s unreachable: %s\n", r.Name, r.Error)
+		if r.Health != nil { // it answered but failed otherwise, e.g. a rejected access key
+			fmt.Fprintf(os.Stderr, "! %s: %s\n", r.Name, r.Error)
+		} else {
+			fmt.Fprintf(os.Stderr, "! %s unreachable: %s\n", r.Name, r.Error)
+		}
 	}
 	return nil
 }

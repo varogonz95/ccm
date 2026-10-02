@@ -54,7 +54,7 @@ browser ──key──▶ ccm web (127.0.0.1:7421) ──bearer──▶ agent 
 `ccm web [--listen 127.0.0.1:7421] [--no-open] [--config path]`
 
 - Loads `hosts.toml` (default path as other hub commands). A missing file or one with no hosts is not an error: the UI shows the first-run screen. A file that fails to parse is a startup error.
-- While running, the poller re-reads `hosts.toml` when its modification time changes. A later parse error keeps the last good config and logs the error.
+- While running, the poller re-reads `hosts.toml` when its modification time or size changes. A later parse error keeps the last good config, logs the error once per change and reports it to the browser as `config_error` in the overview (cleared when the file parses again or is deleted); the dashboard and first-run screen show it in a banner.
 - `--listen` must resolve to a loopback address; anything else is refused with a pointer to #6.
 - Generates a 32-byte random secret (hex) and prints `ccm web: open http://127.0.0.1:7421/?k=<secret>`.
 - Unless `--no-open`, opens the browser without putting the key on a command line (other local users can read process arguments): it writes a redirect page (`<meta http-equiv="refresh">` plus a fallback link to the keyed URL, HTML-escaped) as `open.html` in a new private temp dir (`ccm-web-*`, 0700; file 0600; no key in the name), and opens that file's `file://` URL. The dir is removed after 30s and on exit. If the file can't be written, only the printed link is offered; the key is never passed to the opener. Snap browsers can't read temp files; the printed link is the fallback.
@@ -92,9 +92,12 @@ type HostOverview struct {
 
 ```go
 // Overview is the payload of the web UI's SSE "overview" event.
+// ConfigError is set while hosts.toml doesn't parse; Hosts then holds the
+// last hosts that did.
 type Overview struct {
-	ConfigPath string         `json:"config_path"`
-	Hosts      []HostOverview `json:"hosts"`
+	ConfigPath  string         `json:"config_path"`
+	ConfigError string         `json:"config_error,omitempty"`
+	Hosts       []HostOverview `json:"hosts"`
 }
 ```
 
@@ -110,8 +113,8 @@ Every `/api` route requires the access key: `Authorization: Bearer <key>`, or `?
 
 | Route | Behaviour |
 |---|---|
-| `GET /`, `GET /static/*` | Embedded UI, no key needed. On load the page moves `?k=<key>` into localStorage and removes it from the address bar; with no key it shows "Open the link printed by `ccm web`". |
-| `GET /api/events` | `text/event-stream`. Event `overview` with `api.Overview{config_path, hosts: []api.HostOverview}` on connect and on every change. Comment ping every 20s. |
+| `GET /`, `GET /static/*` | Embedded UI, no key needed. `GET /` sends `X-Frame-Options: DENY` and `Content-Security-Policy: frame-ancestors 'none'` (no script/style policy, which could break xterm.js); the page sets `<meta name="referrer" content="no-referrer">`. On load the page moves `?k=<key>` into localStorage and removes it from the address bar; with no key it shows "Open the link printed by `ccm web`". |
+| `GET /api/events` | `text/event-stream`. Event `overview` with `api.Overview{config_path, config_error?, hosts: []api.HostOverview}` on connect and on every change. Comment ping every 20s. |
 | `POST /api/hosts/{host}/sessions` | Body `api.CreateRequest` → 201 `api.Session`. Unknown host 404. Agent errors relayed as `api.Error` with the agent's status; if the agent rejects its token, 502 "access key rejected. Check hosts.toml.". |
 | `DELETE /api/hosts/{host}/sessions/{id}` | → 204. Relays agent errors (same 502 for a rejected token). |
 | any other `/api/*` | Needs the key like the rest; JSON 404 (catch-all). |

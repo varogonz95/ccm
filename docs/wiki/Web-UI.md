@@ -24,6 +24,7 @@ To keep the access key off the command line, the browser is opened through a sho
 - **A session:** the terminal fills the page. Leaving it only disconnects you; Claude keeps working.
 - **New session:** pick a machine, a folder and optionally a name and extra Claude arguments.
 - **No machines yet:** the steps to add one. The page notices when you save `hosts.toml`.
+- **Hosts file errors:** if `hosts.toml` stops parsing while `ccm web` runs, a banner shows the error and the page keeps the machines from the last good version until you fix and save it.
 
 ## Limits
 

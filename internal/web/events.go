@@ -101,7 +101,8 @@ func (b *broadcaster) poll(ctx context.Context) {
 }
 
 func (b *broadcaster) publish(ctx context.Context) {
-	ov := api.Overview{ConfigPath: b.hosts.path, Hosts: hub.Overview(ctx, b.hosts.Hosts())}
+	hosts, cfgErr := b.hosts.State()
+	ov := api.Overview{ConfigPath: b.hosts.path, ConfigError: cfgErr, Hosts: hub.Overview(ctx, hosts)}
 	data, err := json.Marshal(ov)
 	if err != nil {
 		log.Printf("ccm web: encode overview: %v", err)

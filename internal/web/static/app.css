@@ -131,6 +131,8 @@ a.row:hover { background: var(--raised); color: inherit; }
 .term .xterm { height: 100%; }
 .session > p { margin: 0; }
 .banner { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 12px 16px; border-radius: 10px; background: var(--raised); border: 1px solid var(--rule-strong); }
+.banner.config-error { color: var(--warn-ink); background: var(--warn-bg); border-color: var(--warn-bg); margin-bottom: 24px; overflow-wrap: anywhere; }
+.first-run .banner.config-error { margin-bottom: 0; }
 
 /* dialogs */
 .dialog { width: min(560px, calc(100vw - 32px)); padding: 0; border: 1px solid #2d3d4e; border-radius: 16px; background: var(--panel); color: var(--ink); }

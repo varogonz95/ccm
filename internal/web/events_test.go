@@ -74,10 +74,18 @@ func TestHostsFileReload(t *testing.T) {
 		t.Fatal(err)
 	}
 	bumpMtime(t, cfg)
-	select {
-	case ov := <-events:
-		t.Fatalf("broken file must keep the last good hosts, got %+v", ov.Hosts)
-	case <-time.After(300 * time.Millisecond):
+	ov := next(t, events)
+	if ov.ConfigError == "" {
+		t.Fatal("broken file: config_error is empty")
+	}
+	if n := len(ov.Hosts); n != 2 {
+		t.Fatalf("broken file must keep the last good hosts, got %d", n)
+	}
+
+	writeHosts(t, cfg, testHost{"a", agentURL, "tok"}, testHost{"b", agentURL, "tok"})
+	ov = next(t, events)
+	if ov.ConfigError != "" || len(ov.Hosts) != 2 {
+		t.Fatalf("after fixing: config_error = %q, hosts = %d", ov.ConfigError, len(ov.Hosts))
 	}
 
 	if err := os.Remove(cfg); err != nil {
