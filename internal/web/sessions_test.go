@@ -5,10 +5,13 @@ package web
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"ccm/internal/api"
 	"ccm/internal/hub"
 )
 
@@ -109,5 +112,24 @@ func TestCreateRejectsForeignOrigin(t *testing.T) {
 	}
 	if agentSessions(t, agentURL) != 0 {
 		t.Fatal("a cross-site request created a session")
+	}
+}
+
+func TestAgentRejectingKeyIsBadGateway(t *testing.T) {
+	agentURL := startAgent(t, "tok")
+	cfg := filepath.Join(t.TempDir(), "hosts.toml")
+	writeHosts(t, cfg, testHost{"badkey", agentURL, "wrong"})
+	_, base := startServer(t, cfg)
+	c := login(t, base)
+
+	resp, err := c.Post(base+"/api/hosts/badkey/sessions", "application/json", bytes.NewReader([]byte(`{}`)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	var e api.Error
+	json.NewDecoder(resp.Body).Decode(&e)
+	if resp.StatusCode != http.StatusBadGateway || !strings.Contains(e.Error, "access key rejected") {
+		t.Fatalf("got %d %q, want 502 containing 'access key rejected'", resp.StatusCode, e.Error)
 	}
 }

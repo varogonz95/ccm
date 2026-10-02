@@ -56,11 +56,17 @@ func (s *Server) remove(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// relayErr passes an agent's status and message through; anything else
+// relayErr passes an agent's status and message through (except 401/403,
+// which become 502); anything else
 // (unreachable agent, timeout) becomes 502.
 func relayErr(w http.ResponseWriter, err error) {
 	var he *hub.HTTPError
 	if errors.As(err, &he) {
+		// The agent refusing our token is not the browser's key being wrong.
+		if he.Code == http.StatusUnauthorized || he.Code == http.StatusForbidden {
+			writeErr(w, http.StatusBadGateway, errors.New(hub.ErrMsgAuth+". Check hosts.toml."))
+			return
+		}
 		msg := he.Msg
 		if msg == "" {
 			msg = he.Status
