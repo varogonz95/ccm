@@ -34,7 +34,7 @@ Out of scope (own issues):
 |---|---|---|
 | Where it runs | Local server on the hub machine, `127.0.0.1` only | Tokens stay in `hosts.toml`; avoids browser limits (no bearer header on WebSocket, no CORS on agents, mixed content) |
 | Frontend | Plain HTML/CSS/JS, vendored xterm.js + fit addon, `go:embed` | Go-only build, no Node toolchain, minimal deps; about four views |
-| Local auth | Per-launch random secret in the opened URL, exchanged for a cookie; Host and Origin checks | Blocks other local users and hostile websites (CSRF, cross-site WebSocket, DNS rebinding) |
+| Local auth | Per-launch random access key in the opened URL; the page keeps it in localStorage and sends it on every API call (header, or `?k=` for SSE/WebSocket); Host and Origin checks | Blocks other local users and hostile websites (CSRF, cross-site WebSocket, DNS rebinding). Not a cookie: cookies are sent to every port on a host, so another local user's server could collect one (found in Task 2 review, 2026-10-02) |
 | Backend shape | Aggregated overview + per-host endpoints through `hub.Client`; browser never talks to agents | One request for the dashboard, explicit allowlist of operations |
 | Live updates | Server-sent events, server polls agents | Ready for M3 events without a protocol change on the browser side |
 | Layout | Dashboard of host cards, then a full-page terminal (option B) | Matches the intended mental model; terminal gets the whole page |
@@ -44,7 +44,7 @@ Design canvas (approved mockups): https://claude.ai/artifact/Uec5srZ66rCvfLaUNP1
 ## Architecture
 
 ```
-browser ──cookie──▶ ccm web (127.0.0.1:7421) ──bearer──▶ agent A, B, C…
+browser ──key──▶ ccm web (127.0.0.1:7421) ──bearer──▶ agent A, B, C…
    SSE /api/events    ◀── polls hub.Overview every 2s while a tab is connected
    WS  …/attach       ◀── bridges to the agent's attach WebSocket
 ```
@@ -66,7 +66,7 @@ browser ──cookie──▶ ccm web (127.0.0.1:7421) ──bearer──▶ age
 | File | Responsibility |
 |---|---|
 | `server.go` | `New(cfg, secret) *Server`, route table, create/delete handlers wrapping `hub.Client` |
-| `auth.go` | Secret-to-cookie exchange, cookie check middleware, Host check, WebSocket Origin check |
+| `auth.go` | Access-key check (`Authorization: Bearer` or `?k=`), Host check, Origin check |
 | `events.go` | SSE endpoint and broadcaster: one poller goroutine shared by all subscribers, started on first subscriber, stopped on last; pushes only when the overview changed; drops a subscriber whose buffer is full |
 | `attach.go` | Bridges browser WebSocket ↔ agent WebSocket; frames passed through unchanged; one writer goroutine per connection on each side |
 | `open_unix.go`, `open_windows.go` | Open a URL in the default browser (`xdg-open` / `open` on darwin via `runtime.GOOS`; `rundll32 url.dll,FileProtocolHandler` on Windows) |
@@ -94,18 +94,17 @@ No agent changes. Agent `DELETE /v1/sessions/{id}` already stops a running sessi
 
 ## HTTP API (ccm web)
 
-Every route except the secret exchange requires the session cookie. Every route checks `Host` is `127.0.0.1:<port>` or `localhost:<port>`.
+Every `/api` route requires the access key: `Authorization: Bearer <key>`, or `?k=<key>` for EventSource and WebSocket (which can't set headers); compared in constant time. The page and static files are public (they hold no secrets). Every route checks `Host` is a loopback address or `localhost` on the server's port.
 
 | Route | Behaviour |
 |---|---|
-| `GET /?k=<secret>` | Constant-time compare; on match set cookie `ccm_web` (random value distinct from the secret, HttpOnly, SameSite=Strict, Path=/) and 303 to `/`. On mismatch 401 page. |
-| `GET /`, `GET /static/*` | Embedded UI. Without cookie: 401 page "Open the link printed by `ccm web`." |
+| `GET /`, `GET /static/*` | Embedded UI, no key needed. On load the page moves `?k=<key>` into localStorage and removes it from the address bar; with no key it shows "Open the link printed by `ccm web`". |
 | `GET /api/events` | `text/event-stream`. Event `overview` with `[]api.HostOverview` on connect and on every change. Comment ping every 20s. |
 | `POST /api/hosts/{host}/sessions` | Body `api.CreateRequest` → 201 `api.Session`. Unknown host 404. Agent errors relayed as `api.Error` with the agent's status. |
 | `DELETE /api/hosts/{host}/sessions/{id}` | → 204. Relays agent errors. |
 | `GET /api/hosts/{host}/sessions/{id}/attach` | WebSocket. Requires same-origin `Origin`. Dials agent via `hub.Client.Dial`; on dial failure closes with a close frame carrying the error text. |
 
-Cookie value and secret live only in memory; restarting `ccm web` invalidates both.
+The key lives only in memory on the server; restarting `ccm web` invalidates it, and the page then shows "ccm web was restarted".
 
 ## UI
 
@@ -143,13 +142,13 @@ Visual language from the canvas: dark ground, Bricolage Grotesque for UI text an
 - SSE subscriber buffer of 4 events; a full buffer drops the subscriber (browser reconnects automatically). The poller never blocks on a subscriber.
 - The attach bridge closes both sides when either side closes or errors; the agent's `exit` control is forwarded before close.
 - Create/delete errors are surfaced in the UI, never swallowed.
-- Bad cookie / Host / Origin: 401/403 with a short HTML explanation for page routes, `api.Error` JSON for `/api/*`.
+- Missing or wrong key / Host / Origin: 401/403 with a short HTML explanation for page routes, `api.Error` JSON for `/api/*`.
 
 ## Testing
 
 Go tests in `internal/web`, `!windows`-tagged like `e2e_test.go`, using `httptest` and in-process agents (`agent.NewServer` with `/bin/sh`):
 
-- Auth: secret exchange sets cookie; missing/wrong cookie → 401; foreign `Host` → 403; attach with foreign `Origin` → 403; secret is single-purpose (cookie value ≠ secret).
+- Auth: page and assets public; `/api` without or with a wrong key (header or query) → 401; foreign `Host` → 403; foreign or other-port `Origin` → 403; attach without `Origin` → 403.
 - Overview: one live agent + one closed port → first SSE event has one online and one offline host; creating a session produces a new event containing it; no event when nothing changed.
 - Bridge: create through `POST`, attach, echo bytes round-trip, second attach gets replay, `DELETE` → client receives `exit` control.
 - Config reload: adding a host to `hosts.toml` while a subscriber is connected produces an overview event containing it; writing an invalid file keeps the previous hosts.
@@ -164,6 +163,6 @@ Manual checklist (added to `docs/PLAN.md`): dashboard updates live when a sessio
 
 - `docs/wiki/Web-UI.md` (new), linked from `Home.md` and `_Sidebar.md`.
 - `docs/wiki/Commands.md`: `ccm web` and flags.
-- `docs/wiki/Security.md`: localhost model, secret/cookie, what it does not protect.
+- `docs/wiki/Security.md`: localhost model, access key and why it isn't a cookie, what it does not protect.
 - `docs/wiki/Roadmap.md` and `docs/PLAN.md`: web UI milestone, links to #6, #7, #8, #9.
 - Screenshots of dashboard, session and new-session views at 1280px wide, saved to `site/img/` for #9.
