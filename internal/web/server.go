@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"ccm/internal/api"
 )
 
@@ -32,6 +34,7 @@ type Server struct {
 	bc     *broadcaster
 	secret string // the access key
 	port   int
+	up     websocket.Upgrader
 }
 
 // New loads hosts.toml and prepares the server. A missing file is fine (the
@@ -47,10 +50,18 @@ func New(o Options) (*Server, error) {
 	if o.PollEvery <= 0 {
 		o.PollEvery = 2 * time.Second
 	}
-	return &Server{
+	s := &Server{
 		hosts: hosts, bc: newBroadcaster(hosts, o.PollEvery),
 		secret: o.Secret, port: o.Port,
-	}, nil
+	}
+	s.up = websocket.Upgrader{
+		ReadBufferSize:  32 * 1024,
+		WriteBufferSize: 32 * 1024,
+		// Browsers always send Origin on WebSockets; require it to be us so a
+		// hostile page can't drive a terminal.
+		CheckOrigin: func(r *http.Request) bool { return s.ownOrigin(r.Header.Get("Origin")) },
+	}
+	return s, nil
 }
 
 // Handler returns every route behind the Host check.
@@ -67,6 +78,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.Handle("GET /api/events", s.api(s.events))
 	mux.Handle("POST /api/hosts/{host}/sessions", s.api(s.create))
 	mux.Handle("DELETE /api/hosts/{host}/sessions/{id}", s.api(s.remove))
+	mux.Handle("GET /api/hosts/{host}/sessions/{id}/attach", s.api(s.attach))
 	// Unknown /api paths still demand the key, and answer in JSON.
 	mux.Handle("/api/", s.api(func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, errors.New("not found"))
