@@ -2,6 +2,7 @@
 //
 //	ccm agent                     run on every machine that hosts sessions
 //	ccm token                     print this machine's agent token
+//	ccm mcp                       MCP stub for the Claude Code plugin (see plugin/)
 //	ccm hosts                     check which configured agents are reachable
 //	ccm ls [host]                 list sessions on all (or one) hosts
 //	ccm new <host> [flags] [-- claude args...]
@@ -22,6 +23,7 @@ import (
 	"os/signal"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"text/tabwriter"
 	"time"
@@ -31,6 +33,7 @@ import (
 	"ccm/internal/agent"
 	"ccm/internal/api"
 	"ccm/internal/hub"
+	"ccm/internal/mcp"
 	"ccm/internal/web"
 )
 
@@ -46,6 +49,8 @@ func main() {
 		err = runAgent(args)
 	case "token":
 		err = runToken(args)
+	case "mcp":
+		err = runMCP(args)
 	case "hosts":
 		err = runHosts(args)
 	case "ls", "list":
@@ -79,6 +84,9 @@ func usage() {
 agent side (run on each machine):
   agent [--listen :7420] [--claude claude] [--token-file path]
   token [--token-file path]
+  mcp [--listen :7420] [--claude claude] [--no-spawn] [--no-announce]
+                                     MCP stdio stub run by the Claude Code plugin:
+                                     starts an agent if none runs, announces the session
 
 hub side (run anywhere; reads hosts.toml):
   hosts                              reachability of every configured agent
@@ -147,6 +155,55 @@ func runToken(args []string) error {
 	}
 	fmt.Println(token)
 	return nil
+}
+
+// runMCP is started by Claude Code (via the plugin's .mcp.json) for every
+// session. stdout belongs to the MCP protocol; logs go to stderr, which Claude
+// Code keeps in its MCP logs. It exits on stdin EOF or SIGINT/SIGTERM.
+func runMCP(args []string) error {
+	fs := flag.NewFlagSet("mcp", flag.ExitOnError)
+	listen := fs.String("listen", ":7420", "agent address (and --listen for a spawned agent)")
+	claude := fs.String("claude", "claude", "--claude for a spawned agent")
+	tokenFile := fs.String("token-file", agent.DefaultTokenPath(), "agent token file")
+	logFile := fs.String("log-file", mcp.DefaultLogPath(), "spawned agent's log")
+	noSpawn := fs.Bool("no-spawn", false, "don't start an agent when none answers")
+	noAnnounce := fs.Bool("no-announce", false, "don't list this session on the agent")
+	_ = fs.Parse(args)
+	log.SetOutput(os.Stderr)
+	log.SetPrefix("ccm mcp: ")
+
+	dir := os.Getenv("CLAUDE_PROJECT_DIR")
+	if dir == "" {
+		dir, _ = os.Getwd()
+	}
+	// A claude launched by ccm already belongs to the agent that launched it.
+	managed := os.Getenv("CCM_SESSION_ID") != ""
+
+	// Claude Code stops MCP servers with SIGINT rather than closing stdin.
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+	served := make(chan error, 1)
+	go func() { served <- mcp.Serve(os.Stdin, os.Stdout) }()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		mcp.Run(ctx, mcp.Options{
+			Listen: *listen, Claude: *claude, TokenFile: *tokenFile, LogFile: *logFile,
+			Spawn: !*noSpawn, Announce: !*noAnnounce && !managed,
+			Dir: dir, Pid: os.Getppid(),
+		})
+	}()
+	var err error
+	select {
+	case err = <-served: // stdin closed
+	case <-ctx.Done():
+	}
+	cancel()
+	select { // let Run withdraw the announcement
+	case <-done:
+	case <-time.After(3 * time.Second):
+	}
+	return err
 }
 
 // ---------- hub side ----------
@@ -223,12 +280,33 @@ func runList(args []string) error {
 		hosts = []hub.Host{h}
 	}
 
-	results := hub.Overview(context.Background(), hosts)
+	ov := hub.Overview(context.Background(), hosts)
+	type row struct {
+		api.HostOverview
+		external []api.External
+	}
+	results := make([]row, len(ov))
+	var wg sync.WaitGroup
+	for i := range ov {
+		results[i].HostOverview = ov[i]
+		if !ov[i].Online {
+			continue
+		}
+		wg.Add(1)
+		go func(i int, h hub.Host) {
+			defer wg.Done()
+			ctx, cancel := context.WithTimeout(context.Background(), hub.OverviewTimeout)
+			defer cancel()
+			// Older agents lack /v1/external; treat any error as none.
+			results[i].external, _ = hub.NewClient(h).Externals(ctx)
+		}(i, hosts[i])
+	}
+	wg.Wait()
 	sort.SliceStable(results, func(i, j int) bool { return results[i].Name < results[j].Name })
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "TARGET\tNAME\tSTATUS\tVIEWERS\tAGE\tDIR")
-	var failed []api.HostOverview
+	var failed []row
 	for _, r := range results {
 		if !r.Online {
 			failed = append(failed, r)
@@ -241,6 +319,10 @@ func runList(args []string) error {
 			}
 			fmt.Fprintf(tw, "%s/%s\t%s\t%s\t%d\t%s\t%s\n",
 				r.Name, s.ID, s.Name, status, s.Viewers, age(s.Created), s.Dir)
+		}
+		for _, x := range r.external {
+			fmt.Fprintf(tw, "%s/%s\t%s\texternal\t-\t%s\t%s\n",
+				r.Name, x.ID, x.Name, age(x.Created), x.Dir)
 		}
 	}
 	if err := tw.Flush(); err != nil {

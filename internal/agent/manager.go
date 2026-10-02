@@ -27,12 +27,16 @@ type Options struct {
 	// operator and never taken from API requests: only args are.
 	Command    string
 	Scrollback int // bytes of output kept per session for replay on attach
+	// ExternalTTL is how long an announced external session survives
+	// without renewal (default DefaultExternalTTL).
+	ExternalTTL time.Duration
 }
 
 type Manager struct {
 	opts     Options
 	mu       sync.RWMutex
 	sessions map[string]*Session
+	ext      *externals
 }
 
 func NewManager(o Options) *Manager {
@@ -42,7 +46,7 @@ func NewManager(o Options) *Manager {
 	if o.Scrollback <= 0 {
 		o.Scrollback = 2 << 20
 	}
-	return &Manager{opts: o, sessions: map[string]*Session{}}
+	return &Manager{opts: o, sessions: map[string]*Session{}, ext: newExternals(o.ExternalTTL)}
 }
 
 func (m *Manager) Create(req api.CreateRequest) (*Session, error) {
@@ -112,6 +116,17 @@ func (m *Manager) List() []api.Session {
 	sort.Slice(out, func(i, j int) bool { return out[i].Created.Before(out[j].Created) })
 	return out
 }
+
+// Announce creates or renews the lease of an external session.
+func (m *Manager) Announce(id string, req api.AnnounceRequest) (api.External, error) {
+	return m.ext.announce(id, req)
+}
+
+// Withdraw forgets an external session.
+func (m *Manager) Withdraw(id string) error { return m.ext.withdraw(id) }
+
+// Externals lists announced external sessions whose lease is still valid.
+func (m *Manager) Externals() []api.External { return m.ext.list() }
 
 // Remove stops the session (if still running) and forgets it.
 func (m *Manager) Remove(id string) error {

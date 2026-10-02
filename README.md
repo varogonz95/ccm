@@ -14,7 +14,7 @@ One binary, two roles:
 - **agent**: runs on each machine, owns `claude` processes inside PTYs (ConPTY on Windows), keeps them alive while nobody is watching, and serves a small REST + WebSocket API.
 - **hub**: the `ls / new / attach / kill` commands, run from whichever terminal you're in.
 
-Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in [`site/`](site/index.html).
+Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in https://varogonz95.github.io/ccm/
 
 ## Setup
 
@@ -54,7 +54,7 @@ Anyone holding an agent's token can run Claude Code on that machine, with that m
 
 ## Known limits (MVP)
 
-- Only manages sessions started through ccm, not `claude` launched in a plain terminal.
+- Only manages sessions started through ccm. With the experimental [Claude Code plugin](docs/wiki/Plugin.md), `claude` launched in a plain terminal is listed as `external`, but can't be attached to.
 - Sessions stop when the agent stops. `claude --resume` recovers the conversation.
 - Status is `running` / `exited`. Working / idle / needs-input arrives with M3.
 - Windows: killing a session doesn't yet kill claude's child processes (Job Object TODO).

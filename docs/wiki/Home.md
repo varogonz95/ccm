@@ -23,6 +23,7 @@ laptop/3fa0c1  frontend  running  1        12m    C:\src\frontend
 - [Configuration](Configuration.md): `hosts.toml`, tokens, file locations
 - [How it works](How-It-Works.md): sessions, scrollback, attach
 - [Protocol](Protocol.md): the agent's HTTP and WebSocket API
+- [Claude Code plugin](Plugin.md): auto-start the agent, list every session (experimental)
 - [Security](Security.md): what a token grants and how to keep it safe
 - [Development](Development.md): building, testing, contributing
 - [Roadmap and limits](Roadmap.md): what works today and what's next

@@ -6,6 +6,7 @@
 - [Configuration](Configuration.md)
 - [How it works](How-It-Works.md)
 - [Protocol](Protocol.md)
+- [Claude Code plugin](Plugin.md)
 - [Security](Security.md)
 - [Development](Development.md)
 - [Roadmap and limits](Roadmap.md)

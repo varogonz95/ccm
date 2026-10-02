@@ -2,6 +2,8 @@
 //
 // Transport:
 //   - REST (JSON) for session lifecycle: /v1/health, /v1/sessions, /v1/sessions/{id}
+//   - REST (JSON) for external sessions (claude started outside ccm, announced
+//     by `ccm mcp`): GET /v1/external, PUT/DELETE /v1/external/{id}
 //   - WebSocket for attach: /v1/sessions/{id}/attach
 //     binary frames = raw terminal bytes (both directions)
 //     text frames   = JSON Control messages
@@ -45,6 +47,26 @@ type CreateRequest struct {
 	Args []string `json:"args,omitempty"` // extra args for claude, e.g. ["--resume"]
 	Cols int      `json:"cols,omitempty"`
 	Rows int      `json:"rows,omitempty"`
+}
+
+// External is a Claude Code session the agent does not own: claude was
+// started in a plain terminal and its `ccm mcp` stub announced it. It is
+// listed but cannot be attached or killed through ccm. Entries are a lease:
+// the announcer re-sends PUT periodically and the agent forgets entries not
+// renewed within its TTL.
+type External struct {
+	ID      string    `json:"id"`
+	Name    string    `json:"name"`
+	Dir     string    `json:"dir"`
+	Pid     int       `json:"pid"` // the claude process (parent of the announcer)
+	Created time.Time `json:"created"`
+	Seen    time.Time `json:"seen"`
+}
+
+type AnnounceRequest struct {
+	Name string `json:"name,omitempty"`
+	Dir  string `json:"dir,omitempty"`
+	Pid  int    `json:"pid,omitempty"`
 }
 
 type ControlType string
