@@ -54,7 +54,7 @@ Reach for these before hand-rolling the same thing.
 |---|---|
 | `run-locally` | Build and run an agent + hub loop locally on a branch |
 | `explain-pr` | Explain a PR against its GitHub issue and run a full review pass |
-| `reminders` | Log/recall follow-ups. **Automatic:** any session that yields follow-ups logs them before wrapping up, unasked |
+| `reminders` | Log/recall follow-ups in the Reminders artifact (claude.ai). **Automatic:** any session that yields follow-ups logs them before wrapping up, unasked |
 
 | Agent (`.claude/agents/`) | Use it for |
 |---|---|
