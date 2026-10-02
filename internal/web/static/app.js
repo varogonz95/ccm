@@ -5,6 +5,7 @@
 const HOST_COLORS = ['#6a9cf2', '#f0b43c', '#52c27f', '#e8875a', '#b48cf0', '#4fc1c9'];
 const AUTH_ERROR = 'access key rejected'; // hub.ErrMsgAuth
 const CLOSE_NOT_FOUND = 4404; // web.closeNotFound
+const CLOSE_UNREACHABLE = 4502; // web.closeUnreachable
 const KEY_STORE = 'ccm_key';
 
 // takeKey moves the access key from the opened link (?k=…) into
@@ -132,6 +133,16 @@ function toast(msg) {
   setTimeout(() => t.remove(), 6000);
 }
 
+// keepFocus runs a re-render and gives focus back to the element carrying
+// the same data-key, so keyboard users don't lose their place on updates.
+function keepFocus(rerender) {
+  const key = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.key : null;
+  rerender();
+  if (!key) return;
+  const el = [...document.querySelectorAll('[data-key]')].find((x) => x.dataset.key === key);
+  if (el) el.focus();
+}
+
 function go(hash) { location.hash = hash; }
 
 // ---------- live data ----------
@@ -192,10 +203,10 @@ function liveBadge() {
 function topbar() {
   const canCreate = state.overview && state.overview.hosts.some((x) => x.online);
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-in' },
-    h('a', { class: 'brand', href: '#/' }, h('span', { class: 'wordmark' }, 'ccm'), h('span', { class: 'mono small muted' }, 'hub')),
+    h('a', { class: 'brand', href: '#/', 'data-key': 'brand' }, h('span', { class: 'wordmark' }, 'ccm'), h('span', { class: 'mono small muted' }, 'hub')),
     h('div', { class: 'grow' }),
     liveBadge(),
-    canCreate ? h('a', { class: 'btn primary', href: '#/new' }, icon('plus'), 'New session') : null));
+    canCreate ? h('a', { class: 'btn primary', href: '#/new', 'data-key': 'new' }, icon('plus'), 'New session') : null));
 }
 
 function renderHome() {
@@ -204,7 +215,7 @@ function renderHome() {
   if (!ov) body = h('p', { class: 'muted' }, 'Looking for your machines…');
   else if (ov.hosts.length === 0) body = firstRun(ov);
   else body = dashboard(ov);
-  app.replaceChildren(topbar(), h('main', { class: 'page' }, body));
+  keepFocus(() => app.replaceChildren(topbar(), h('main', { class: 'page' }, body)));
 }
 
 function dashboard(ov) {
@@ -228,7 +239,7 @@ function hostCard(host) {
       h('span', { class: 'pill ok' }, 'Online')),
     host.sessions.map((s) => sessionRow(host.name, s)),
     h('div', { class: 'card-foot' },
-      h('a', { class: 'link', href: `#/new/${encodeURIComponent(host.name)}` }, icon('plus'), `New session on ${host.name}`)));
+      h('a', { class: 'link', href: `#/new/${encodeURIComponent(host.name)}`, 'data-key': `new:${host.name}` }, icon('plus'), `New session on ${host.name}`)));
 }
 
 function sessionRow(hostName, s) {
@@ -239,9 +250,9 @@ function sessionRow(hostName, s) {
       h('span', { class: 'grow' },
         h('span', { class: 'row-title muted' }, label),
         h('span', { class: 'mono small muted' }, `Exited · code ${s.exit_code}`)),
-      h('button', { class: 'btn ghost small', type: 'button', onclick: () => dismiss(hostName, s) }, 'Dismiss'));
+      h('button', { class: 'btn ghost small', type: 'button', 'data-key': `dismiss:${hostName}/${s.id}`, onclick: () => dismiss(hostName, s) }, 'Dismiss'));
   }
-  return h('a', { class: 'row', href: `#/s/${encodeURIComponent(hostName)}/${encodeURIComponent(s.id)}` },
+  return h('a', { class: 'row', href: `#/s/${encodeURIComponent(hostName)}/${encodeURIComponent(s.id)}`, 'data-key': `row:${hostName}/${s.id}` },
     h('span', { class: 'dot ok' }),
     h('span', { class: 'grow' },
       h('span', { class: 'row-title' }, label),
@@ -404,7 +415,7 @@ function openSession(host, id) {
   state.view = v;
   app.replaceChildren(
     h('header', { class: 'topbar' }, h('div', { class: 'topbar-in' },
-      h('a', { class: 'back', href: '#/' }, icon('back'), 'All machines'),
+      h('a', { class: 'back', href: '#/', 'data-key': 'back' }, icon('back'), 'All machines'),
       h('div', { class: 'grow' }),
       v.liveSlot)),
     h('div', { class: 'session' },
@@ -449,15 +460,20 @@ function connect(v) {
   const ws = new WebSocket(`${proto}://${location.host}${sessionPath(v.host, v.id)}/attach?k=${encodeURIComponent(KEY)}`);
   ws.binaryType = 'arraybuffer';
   v.ws = ws;
-  ws.onopen = () => {
-    v.backoff = 1000;
-    v.term.reset(); // the agent replays scrollback on every attach; don't show it twice
-    v.conn = 'connected';
-    setBanner(v, null);
-    sendResize(v, v.term.cols, v.term.rows);
-    renderSessionChrome();
-  };
+  let established = false;
+  // The bridge accepts the browser socket before it dials the agent, so open
+  // proves nothing. The first message from the agent does.
+  ws.onopen = () => sendResize(v, v.term.cols, v.term.rows);
   ws.onmessage = (e) => {
+    if (!established) {
+      established = true;
+      v.backoff = 1000;
+      v.term.reset(); // the agent replays scrollback on every attach; don't show it twice
+      v.conn = 'connected';
+      setBanner(v, null);
+      sendResize(v, v.term.cols, v.term.rows);
+      renderSessionChrome();
+    }
     if (typeof e.data !== 'string') { v.term.write(new Uint8Array(e.data)); return; }
     let msg;
     try { msg = JSON.parse(e.data); } catch (_) { return; }
@@ -478,8 +494,16 @@ function connect(v) {
       renderSessionChrome();
       return;
     }
+    if (e.code === CLOSE_UNREACHABLE && e.reason.startsWith(AUTH_ERROR)) {
+      v.conn = 'ended';
+      setBanner(v, h('div', { class: 'banner', role: 'status' }, 'Access key rejected. Check hosts.toml.',
+        h('a', { class: 'btn ghost small', href: '#/' }, 'Back to machines')));
+      renderSessionChrome();
+      return;
+    }
     v.conn = 'reconnecting';
-    setBanner(v, h('div', { class: 'banner', role: 'status' }, 'Disconnected, reconnecting…'));
+    setBanner(v, h('div', { class: 'banner', role: 'status' }, e.code === CLOSE_UNREACHABLE
+      ? `Can't reach ${v.host}: ${e.reason}. Retrying…` : 'Disconnected, reconnecting…'));
     renderSessionChrome();
     v.timer = setTimeout(() => connect(v), v.backoff);
     v.backoff = Math.min(v.backoff * 2, 10000);
@@ -500,17 +524,17 @@ function renderSessionChrome() {
   const connected = v.conn === 'connected';
   const connText = { connecting: 'Connecting…', connected: 'Connected', reconnecting: 'Reconnecting…', ended: 'Ended' }[v.conn];
   const viewers = session ? session.viewers : 0;
-  v.chromeEl.replaceChildren(
+  keepFocus(() => v.chromeEl.replaceChildren(
     h('div', { class: 'session-head' },
       tile(v.host, !!(host && host.online)),
       h('div', { class: 'grow' }, h('div', { class: 'small muted' }, v.host), h('h1', {}, label)),
       v.exited || v.conn === 'ended' ? null
-        : h('button', { class: 'btn danger', type: 'button', onclick: () => endSession(v, label) }, icon('x'), 'End session')),
+        : h('button', { class: 'btn danger', type: 'button', 'data-key': 'end', onclick: () => endSession(v, label) }, icon('x'), 'End session')),
     h('div', { class: 'chips' },
       session ? h('span', { class: 'chip' }, icon('folder'), h('span', { class: 'mono' }, session.dir)) : null,
       session ? h('span', { class: 'chip' }, `Started ${longAge(session.created)}`) : null,
       session && connected ? h('span', { class: 'chip' }, viewers <= 1 ? 'Only you are viewing' : `${viewers} people viewing`) : null,
-      h('span', { class: connected ? 'chip ok' : 'chip' }, h('span', { class: connected ? 'dot ok' : 'dot' }), connText)));
+      h('span', { class: connected ? 'chip ok' : 'chip' }, h('span', { class: connected ? 'dot ok' : 'dot' }), connText))));
 }
 
 function confirmDialog(title, text, action) {

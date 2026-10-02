@@ -42,7 +42,11 @@ func (s *Server) attach(w http.ResponseWriter, r *http.Request) {
 		if errors.As(err, &he) && he.Code == http.StatusNotFound {
 			code = closeNotFound
 		}
-		closeWith(browser, code, err.Error())
+		reason := err.Error()
+		if errors.As(err, &he) && (he.Code == http.StatusUnauthorized || he.Code == http.StatusForbidden) {
+			reason = hub.ErrMsgAuth + ". Check hosts.toml."
+		}
+		closeWith(browser, code, reason)
 		return
 	}
 	defer agentConn.Close()

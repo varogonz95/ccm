@@ -140,6 +140,21 @@ func TestAttachOfflineHost(t *testing.T) {
 	}
 }
 
+func TestAttachWrongToken(t *testing.T) {
+	cfg := filepath.Join(t.TempDir(), "hosts.toml")
+	writeHosts(t, cfg, testHost{"bad", startAgent(t, "tok"), "wrong"})
+	_, base := startServer(t, cfg)
+	conn, _, err := dialAttach(base, "bad", "x", base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+	ce := readClose(t, conn)
+	if ce.Code != closeUnreachable || !strings.Contains(ce.Text, "access key rejected") {
+		t.Fatalf("close %d %q, want %d with access key rejected", ce.Code, ce.Text, closeUnreachable)
+	}
+}
+
 func TestAttachUnknownHost(t *testing.T) {
 	_, base := attachSetup(t)
 	_, resp, err := dialAttach(base, "nope", "x", base)
