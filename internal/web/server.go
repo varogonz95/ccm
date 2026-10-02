@@ -29,6 +29,7 @@ type Options struct {
 
 type Server struct {
 	hosts  *hostsFile
+	bc     *broadcaster
 	secret string // the access key
 	port   int
 }
@@ -43,7 +44,13 @@ func New(o Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Server{hosts: hosts, secret: o.Secret, port: o.Port}, nil
+	if o.PollEvery <= 0 {
+		o.PollEvery = 2 * time.Second
+	}
+	return &Server{
+		hosts: hosts, bc: newBroadcaster(hosts, o.PollEvery),
+		secret: o.Secret, port: o.Port,
+	}, nil
 }
 
 // Handler returns every route behind the Host check.
@@ -57,6 +64,7 @@ func (s *Server) routes() *http.ServeMux {
 	// The page and its assets hold no secrets; everything that does is under /api.
 	mux.HandleFunc("GET /{$}", s.serveIndex)
 	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
+	mux.Handle("GET /api/events", s.api(s.events))
 	// Unknown /api paths still demand the key, and answer in JSON.
 	mux.Handle("/api/", s.api(func(w http.ResponseWriter, _ *http.Request) {
 		writeErr(w, http.StatusNotFound, errors.New("not found"))
