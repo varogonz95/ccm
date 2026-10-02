@@ -14,7 +14,7 @@ One binary, two roles:
 - **agent**: runs on each machine, owns `claude` processes inside PTYs (ConPTY on Windows), keeps them alive while nobody is watching, and serves a small REST + WebSocket API.
 - **hub**: the `ls / new / attach / kill` commands, run from whichever terminal you're in.
 
-Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in [`site/`](site/index.html).
+Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in https://varogonz95.github.io/ccm/
 
 ## Setup
 
