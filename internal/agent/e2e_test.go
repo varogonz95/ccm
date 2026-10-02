@@ -118,3 +118,47 @@ func TestReplayOnLateAttach(t *testing.T) {
 		t.Fatalf("replay missing earlier output: %q", data)
 	}
 }
+
+// External sessions: announce is an upsert, list drops expired leases,
+// withdraw removes.
+func TestExternalLease(t *testing.T) {
+	m := agent.NewManager(agent.Options{Command: "/bin/sh", ExternalTTL: time.Second})
+	defer m.Shutdown()
+	srv := httptest.NewServer(agent.NewServer(m, "k").Handler())
+	defer srv.Close()
+	ctx := context.Background()
+	c := hub.NewClient(hub.Host{Name: "t", URL: srv.URL, Token: "k"})
+
+	if _, err := c.Announce(ctx, "bad/id", api.AnnounceRequest{}); err == nil {
+		t.Fatal("expected error for invalid id")
+	}
+	first, err := c.Announce(ctx, "abc", api.AnnounceRequest{Dir: "/src/api", Pid: 7})
+	if err != nil || first.Name != "api" {
+		t.Fatalf("announce = %+v, %v", first, err)
+	}
+	time.Sleep(200 * time.Millisecond)
+	again, err := c.Announce(ctx, "abc", api.AnnounceRequest{Dir: "/src/api", Pid: 7})
+	if err != nil || !again.Created.Equal(first.Created) || !again.Seen.After(first.Seen) {
+		t.Fatalf("renew = %+v, %v (first %+v)", again, err, first)
+	}
+	if _, err := c.Announce(ctx, "def", api.AnnounceRequest{Name: "other"}); err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(300 * time.Millisecond) // "abc" renewed 300ms ago, still live
+	if x, _ := c.Externals(ctx); len(x) != 2 || x[0].ID != "abc" {
+		t.Fatalf("list = %+v", x)
+	}
+	if err := c.Withdraw(ctx, "def"); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Withdraw(ctx, "def"); err == nil {
+		t.Fatal("expected not found on second withdraw")
+	}
+	time.Sleep(1200 * time.Millisecond) // "abc" now past its TTL
+	if x, _ := c.Externals(ctx); len(x) != 0 {
+		t.Fatalf("expired lease still listed: %+v", x)
+	}
+	if s, _ := c.List(ctx); len(s) != 0 {
+		t.Fatalf("externals leaked into sessions: %+v", s)
+	}
+}

@@ -48,6 +48,9 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /v1/sessions", s.auth(s.create))
 	mux.Handle("DELETE /v1/sessions/{id}", s.auth(s.remove))
 	mux.Handle("GET /v1/sessions/{id}/attach", s.auth(s.attach))
+	mux.Handle("GET /v1/external", s.auth(s.listExternal))
+	mux.Handle("PUT /v1/external/{id}", s.auth(s.announce))
+	mux.Handle("DELETE /v1/external/{id}", s.auth(s.withdraw))
 	return mux
 }
 
@@ -91,6 +94,33 @@ func (s *Server) remove(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, statusFor(err), err)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) listExternal(w http.ResponseWriter, _ *http.Request) {
+	writeJSON(w, http.StatusOK, s.m.Externals())
+}
+
+func (s *Server) announce(w http.ResponseWriter, r *http.Request) {
+	var req api.AnnounceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	x, err := s.m.Announce(r.PathValue("id"), req)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, x)
+}
+
+func (s *Server) withdraw(w http.ResponseWriter, r *http.Request) {
+	if err := s.m.Withdraw(r.PathValue("id")); err != nil {
+		writeErr(w, statusFor(err), err)
+		return
+	}
+	log.Printf("external session %s withdrawn", r.PathValue("id"))
 	w.WriteHeader(http.StatusNoContent)
 }
 

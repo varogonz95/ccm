@@ -44,6 +44,21 @@ func (c *Client) Kill(ctx context.Context, id string) error {
 	return c.do(ctx, http.MethodDelete, "/v1/sessions/"+url.PathEscape(id), nil, nil)
 }
 
+func (c *Client) Externals(ctx context.Context) ([]api.External, error) {
+	var out []api.External
+	return out, c.do(ctx, http.MethodGet, "/v1/external", nil, &out)
+}
+
+// Announce creates or renews an external session lease on the agent.
+func (c *Client) Announce(ctx context.Context, id string, req api.AnnounceRequest) (api.External, error) {
+	var out api.External
+	return out, c.do(ctx, http.MethodPut, "/v1/external/"+url.PathEscape(id), req, &out)
+}
+
+func (c *Client) Withdraw(ctx context.Context, id string) error {
+	return c.do(ctx, http.MethodDelete, "/v1/external/"+url.PathEscape(id), nil, nil)
+}
+
 // Dial opens the attach WebSocket for a session.
 func (c *Client) Dial(ctx context.Context, id string) (*websocket.Conn, error) {
 	u := c.Host.URL + "/v1/sessions/" + url.PathEscape(id) + "/attach"

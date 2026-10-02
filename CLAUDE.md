@@ -13,6 +13,8 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `internal/ptyx` — PTY abstraction; `_unix.go` (creack/pty) and `_windows.go` (ConPTY).
 - `internal/agent` — session manager, HTTP/WebSocket server, token, scrollback.
 - `internal/hub` — hosts config, agent client, terminal attach.
+- `internal/mcp` — `ccm mcp`: tool-less MCP stdio stub run by the Claude Code plugin; spawns a detached agent and announces the session (`/v1/external` lease). PoC, see `docs/poc-auto-agent.md`.
+- `plugin/` — the Claude Code plugin (`.mcp.json` runs `ccm mcp`); `.claude-plugin/marketplace.json` at the root makes the repo a marketplace.
 - `docs/wiki` — user docs (GitHub-wiki style pages, `Home.md` is the index). Update them when flags, commands or the protocol change.
 - `site/index.html` — static landing page, deployed to GitHub Pages by `.github/workflows/pages.yml`.
 
