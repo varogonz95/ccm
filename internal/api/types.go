@@ -86,3 +86,23 @@ type Control struct {
 type Error struct {
 	Error string `json:"error"`
 }
+
+// HostOverview is one configured host as the hub sees it: health and
+// sessions, or why it could not be reached. Tokens are never included.
+type HostOverview struct {
+	Name     string    `json:"name"`
+	URL      string    `json:"url"`
+	Online   bool      `json:"online"`
+	Health   *Health   `json:"health,omitempty"`
+	Error    string    `json:"error,omitempty"`
+	Sessions []Session `json:"sessions"`
+}
+
+// Overview is the payload of the web UI's "overview" event.
+// ConfigError is set while hosts.toml doesn't parse; Hosts then holds the
+// last hosts that did.
+type Overview struct {
+	ConfigPath  string         `json:"config_path"`
+	ConfigError string         `json:"config_error,omitempty"`
+	Hosts       []HostOverview `json:"hosts"`
+}

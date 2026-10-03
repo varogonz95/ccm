@@ -17,7 +17,9 @@ type Session struct {
 	Args    []string
 	Created time.Time
 
-	p ptyx.PTY
+	p         ptyx.PTY
+	ptyMu     sync.Mutex // serializes Resize with the final Close
+	ptyClosed bool       // set under ptyMu by waitLoop; Resize is a no-op after
 
 	mu         sync.Mutex
 	sb         *Scrollback
@@ -87,7 +89,10 @@ func (s *Session) waitLoop() {
 	// Let the reader drain any final output, then close the PTY.
 	// On Windows the ConPTY read only unblocks once it is closed.
 	time.Sleep(200 * time.Millisecond)
+	s.ptyMu.Lock()
+	s.ptyClosed = true
 	_ = s.p.Close()
+	s.ptyMu.Unlock()
 	close(s.done)
 }
 
@@ -122,6 +127,12 @@ func (s *Session) Write(p []byte) (int, error) { return s.p.Write(p) }
 func (s *Session) Resize(cols, rows int) error {
 	if cols <= 0 || rows <= 0 {
 		return nil
+	}
+	// Fd() inside Setsize races with Close; serialize them.
+	s.ptyMu.Lock()
+	defer s.ptyMu.Unlock()
+	if s.ptyClosed {
+		return nil // the handle is gone (freed on Windows); nothing to resize
 	}
 	return s.p.Resize(cols, rows)
 }

@@ -8,6 +8,7 @@
 //	ccm new <host> [flags] [-- claude args...]
 //	ccm attach <host>/<id>        attach; Ctrl-] detaches
 //	ccm kill <host>/<id>
+//	ccm web                       browser UI for every host and session
 package main
 
 import (
@@ -16,6 +17,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -32,6 +34,7 @@ import (
 	"ccm/internal/api"
 	"ccm/internal/hub"
 	"ccm/internal/mcp"
+	"ccm/internal/web"
 )
 
 func main() {
@@ -58,6 +61,8 @@ func main() {
 		err = runAttach(args)
 	case "kill", "rm":
 		err = runKill(args)
+	case "web":
+		err = runWeb(args)
 	case "version":
 		fmt.Println("ccm", api.Version)
 	case "help", "-h", "--help":
@@ -89,6 +94,8 @@ hub side (run anywhere; reads hosts.toml):
   new <host> [--dir d] [--name n] [--detached] [-- claude args...]
   attach <host>/<id>                 attach (id prefix ok); Ctrl-] detaches
   kill <host>/<id>                   stop and remove a session
+  web [--listen 127.0.0.1:7421] [--no-open]
+                                     open the browser UI (loopback only)
 
 hub commands accept --config (default: `+hub.DefaultConfigPath()+`)
 `)
@@ -240,32 +247,19 @@ func runHosts(args []string) error {
 	if err != nil {
 		return err
 	}
-	type row struct{ name, url, status string }
-	rows := make([]row, len(cfg.Hosts))
-	var wg sync.WaitGroup
-	for i, h := range cfg.Hosts {
-		wg.Add(1)
-		go func(i int, h hub.Host) {
-			defer wg.Done()
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-			defer cancel()
-			c := hub.NewClient(h)
-			status := "ok"
-			if hl, err := c.Health(ctx); err != nil {
-				status = "unreachable: " + err.Error()
-			} else if _, err := c.List(ctx); err != nil {
-				status = "auth failed: " + err.Error()
-			} else {
-				status = fmt.Sprintf("ok (%s, %s, v%s)", hl.Host, hl.OS, hl.Version)
-			}
-			rows[i] = row{h.Name, h.URL, status}
-		}(i, h)
-	}
-	wg.Wait()
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "HOST\tURL\tSTATUS")
-	for _, r := range rows {
-		fmt.Fprintf(tw, "%s\t%s\t%s\n", r.name, r.url, r.status)
+	for _, o := range hub.Overview(context.Background(), cfg.Hosts) {
+		var status string
+		switch {
+		case o.Online:
+			status = fmt.Sprintf("ok (%s, %s, v%s)", o.Health.Host, o.Health.OS, o.Health.Version)
+		case o.Health == nil:
+			status = "unreachable: " + o.Error
+		default:
+			status = "auth failed: " + o.Error
+		}
+		fmt.Fprintf(tw, "%s\t%s\t%s\n", o.Name, o.URL, status)
 	}
 	return tw.Flush()
 }
@@ -286,56 +280,60 @@ func runList(args []string) error {
 		hosts = []hub.Host{h}
 	}
 
-	type result struct {
-		host     string
-		sessions []api.Session
+	ov := hub.Overview(context.Background(), hosts)
+	type row struct {
+		api.HostOverview
 		external []api.External
-		err      error
 	}
-	results := make([]result, len(hosts))
+	results := make([]row, len(ov))
 	var wg sync.WaitGroup
-	for i, h := range hosts {
+	for i := range ov {
+		results[i].HostOverview = ov[i]
+		if !ov[i].Online {
+			continue
+		}
 		wg.Add(1)
 		go func(i int, h hub.Host) {
 			defer wg.Done()
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), hub.OverviewTimeout)
 			defer cancel()
-			c := hub.NewClient(h)
-			s, err := c.List(ctx)
 			// Older agents lack /v1/external; treat any error as none.
-			x, _ := c.Externals(ctx)
-			results[i] = result{h.Name, s, x, err}
-		}(i, h)
+			results[i].external, _ = hub.NewClient(h).Externals(ctx)
+		}(i, hosts[i])
 	}
 	wg.Wait()
-	sort.SliceStable(results, func(i, j int) bool { return results[i].host < results[j].host })
+	sort.SliceStable(results, func(i, j int) bool { return results[i].Name < results[j].Name })
 
 	tw := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(tw, "TARGET\tNAME\tSTATUS\tVIEWERS\tAGE\tDIR")
-	var failed []result
+	var failed []row
 	for _, r := range results {
-		if r.err != nil {
+		if !r.Online {
 			failed = append(failed, r)
 			continue
 		}
-		for _, s := range r.sessions {
+		for _, s := range r.Sessions {
 			status := string(s.Status)
 			if s.ExitCode != nil {
 				status = fmt.Sprintf("exited(%d)", *s.ExitCode)
 			}
 			fmt.Fprintf(tw, "%s/%s\t%s\t%s\t%d\t%s\t%s\n",
-				r.host, s.ID, s.Name, status, s.Viewers, age(s.Created), s.Dir)
+				r.Name, s.ID, s.Name, status, s.Viewers, age(s.Created), s.Dir)
 		}
 		for _, x := range r.external {
 			fmt.Fprintf(tw, "%s/%s\t%s\texternal\t-\t%s\t%s\n",
-				r.host, x.ID, x.Name, age(x.Created), x.Dir)
+				r.Name, x.ID, x.Name, age(x.Created), x.Dir)
 		}
 	}
 	if err := tw.Flush(); err != nil {
 		return err
 	}
 	for _, r := range failed {
-		fmt.Fprintf(os.Stderr, "! %s unreachable: %v\n", r.host, r.err)
+		if r.Health != nil { // it answered but failed otherwise, e.g. a rejected access key
+			fmt.Fprintf(os.Stderr, "! %s: %s\n", r.Name, r.Error)
+		} else {
+			fmt.Fprintf(os.Stderr, "! %s unreachable: %s\n", r.Name, r.Error)
+		}
 	}
 	return nil
 }
@@ -418,6 +416,62 @@ func runKill(args []string) error {
 		return err
 	}
 	fmt.Printf("killed %s/%s\n", hostName, id)
+	return nil
+}
+
+func runWeb(args []string) error {
+	fs, cfgPath := hubFlags("web")
+	listen := fs.String("listen", "127.0.0.1:7421", "loopback address for the web UI")
+	noOpen := fs.Bool("no-open", false, "print the URL without opening a browser")
+	parseInterspersed(fs, args)
+	if err := web.CheckLoopback(*listen); err != nil {
+		return err
+	}
+	ln, err := net.Listen("tcp", *listen)
+	if err != nil {
+		return err
+	}
+	secret := web.NewSecret()
+	srv, err := web.New(web.Options{
+		ConfigPath: *cfgPath,
+		Secret:     secret,
+		Port:       ln.Addr().(*net.TCPAddr).Port,
+	})
+	if err != nil {
+		ln.Close()
+		return err
+	}
+	httpSrv := &http.Server{Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	go func() {
+		<-ctx.Done()
+		sctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if httpSrv.Shutdown(sctx) != nil {
+			_ = httpSrv.Close() // open event streams don't end on their own
+		}
+	}()
+
+	u := fmt.Sprintf("http://%s/?k=%s", ln.Addr(), secret)
+	fmt.Printf("ccm web: open %s\n(Ctrl-C to stop)\n", u)
+	if !*noOpen {
+		// The browser gets a private file that redirects to u, never u itself:
+		// a command line is visible to every local user.
+		if rd, err := web.WriteRedirect(u); err != nil {
+			fmt.Fprintf(os.Stderr, "ccm web: couldn't prepare the browser launch (%v); open the link above\n", err)
+		} else {
+			defer rd.Remove()
+			time.AfterFunc(30*time.Second, func() { _ = rd.Remove() })
+			if err := web.OpenBrowser(rd.URL()); err != nil {
+				fmt.Fprintf(os.Stderr, "ccm web: couldn't open a browser (%v); open the link above\n", err)
+			}
+		}
+	}
+	if err := httpSrv.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
 	return nil
 }
 

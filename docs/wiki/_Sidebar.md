@@ -2,6 +2,7 @@
 - [Installation](Installation.md)
 - [Quick start](Quick-Start.md)
 - [Commands](Commands.md)
+- [Web UI](Web-UI.md)
 - [Configuration](Configuration.md)
 - [How it works](How-It-Works.md)
 - [Protocol](Protocol.md)
