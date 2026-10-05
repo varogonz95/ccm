@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 
 	"ccm/internal/api"
@@ -75,29 +77,25 @@ func Attach(ctx context.Context, c *Client, id string) error {
 		}
 	}()
 
+	// Cancellable so no reader is left blocked on stdin once Attach returns;
+	// a caller that keeps running (the TUI) gets the terminal back intact.
+	in, err := cancelreader.NewReader(os.Stdin)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
 	detached := make(chan struct{})
-	// TODO(M2): this goroutine stays blocked in Read after detach. Fine for a
-	// one-shot CLI; the TUI needs a cancellable stdin reader.
+	inputDone := make(chan struct{})
+	defer func() {
+		if in.Cancel() {
+			<-inputDone
+		}
+	}()
 	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, err := os.Stdin.Read(buf)
-			if n > 0 {
-				chunk := buf[:n]
-				if i := bytes.IndexByte(chunk, DetachKey); i >= 0 {
-					if i > 0 {
-						_ = send(websocket.BinaryMessage, chunk[:i])
-					}
-					close(detached)
-					return
-				}
-				if send(websocket.BinaryMessage, append([]byte(nil), chunk...)) != nil {
-					return
-				}
-			}
-			if err != nil {
-				return
-			}
+		defer close(inputDone)
+		if pumpInput(in, func(b []byte) error { return send(websocket.BinaryMessage, b) }) {
+			close(detached)
 		}
 	}()
 
@@ -150,4 +148,29 @@ func Attach(ctx context.Context, c *Client, id string) error {
 		return nil
 	}
 	return fmt.Errorf("connection lost: %w", res.err)
+}
+
+// pumpInput forwards r to send until r fails (EOF, cancel) or send fails, and
+// reports whether it stopped because the user pressed DetachKey. Input before
+// DetachKey in the same read is still sent; anything after it is dropped.
+func pumpInput(r io.Reader, send func([]byte) error) (detached bool) {
+	buf := make([]byte, 4096)
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			chunk := buf[:n]
+			if i := bytes.IndexByte(chunk, DetachKey); i >= 0 {
+				if i > 0 {
+					_ = send(chunk[:i])
+				}
+				return true
+			}
+			if send(append([]byte(nil), chunk...)) != nil {
+				return false
+			}
+		}
+		if err != nil {
+			return false
+		}
+	}
 }
