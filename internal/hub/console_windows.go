@@ -10,8 +10,8 @@ import (
 
 // prepareConsole enables VT output and UTF-8 so claude's TUI renders correctly
 // in the local Windows console. Raw VT *input* is handled by term.MakeRaw.
-func prepareConsole() (restore func()) {
-	out := windows.Handle(os.Stdout.Fd())
+func prepareConsole(stdout *os.File) (restore func()) {
+	out := windows.Handle(stdout.Fd())
 	var mode uint32
 	haveMode := windows.GetConsoleMode(out, &mode) == nil
 	if haveMode {

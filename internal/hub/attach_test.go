@@ -34,8 +34,8 @@ func TestPumpInputDetach(t *testing.T) {
 
 	var s sink
 	w.Write([]byte("ls\x1dignored"))
-	if !pumpInput(r, s.send) {
-		t.Fatal("pumpInput did not report detach")
+	if detached, err := pumpInput(r, s.send); !detached || err != nil {
+		t.Fatalf("pumpInput = %v, %v; want detach", detached, err)
 	}
 	if s.String() != "ls" {
 		t.Fatalf("sent %q, want %q", s.String(), "ls")

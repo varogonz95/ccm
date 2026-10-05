@@ -35,7 +35,10 @@ func TestPumpInputCancel(t *testing.T) {
 
 	var s sink
 	done := make(chan bool, 1)
-	go func() { done <- pumpInput(in, s.send) }()
+	go func() {
+		detached, _ := pumpInput(in, s.send)
+		done <- detached
+	}()
 
 	w.Write([]byte("hi"))
 	deadline := time.Now().Add(2 * time.Second)
