@@ -30,6 +30,7 @@ Split-pane multi-view; mDNS discovery; TLS or Tailscale for off-LAN; session per
 2. Claude's TUI renders, arrow keys and Esc work, window resize reflows.
 3. Detach, re-attach: screen repaints cleanly.
 4. `ccm kill`: claude process gone in Task Manager.
+5. While attached, paste text and type non-ASCII (ñ, an emoji): it arrives intact. Click in the console (focus events) and keep typing: nothing is lost or stuck.
 
 ## Manual web UI check
 

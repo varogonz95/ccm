@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/muesli/cancelreader"
 	"golang.org/x/term"
 
 	"ccm/internal/api"
@@ -77,26 +76,26 @@ func Attach(ctx context.Context, c *Client, id string) error {
 		}
 	}()
 
-	// Cancellable so no reader is left blocked on stdin once Attach returns;
-	// a caller that keeps running (the TUI) gets the terminal back intact.
-	in, err := cancelreader.NewReader(os.Stdin)
+	in, err := newCancelReader(os.Stdin)
 	if err != nil {
 		return err
 	}
-	defer in.Close()
-
 	detached := make(chan struct{})
 	inputDone := make(chan struct{})
-	defer func() {
-		if in.Cancel() {
-			<-inputDone
-		}
-	}()
 	go func() {
 		defer close(inputDone)
 		if pumpInput(in, func(b []byte) error { return send(websocket.BinaryMessage, b) }) {
 			close(detached)
 		}
+	}()
+	// Leave nothing reading stdin once Attach returns, so a caller that keeps
+	// running (the TUI) gets the terminal back. Close the connection before
+	// waiting: the input goroutine may be stuck in send on a dead connection.
+	defer func() {
+		in.Cancel()
+		conn.Close()
+		<-inputDone
+		in.Close()
 	}()
 
 	type result struct {
@@ -153,6 +152,7 @@ func Attach(ctx context.Context, c *Client, id string) error {
 // pumpInput forwards r to send until r fails (EOF, cancel) or send fails, and
 // reports whether it stopped because the user pressed DetachKey. Input before
 // DetachKey in the same read is still sent; anything after it is dropped.
+// send must not keep the slice after returning.
 func pumpInput(r io.Reader, send func([]byte) error) (detached bool) {
 	buf := make([]byte, 4096)
 	for {
@@ -165,7 +165,7 @@ func pumpInput(r io.Reader, send func([]byte) error) (detached bool) {
 				}
 				return true
 			}
-			if send(append([]byte(nil), chunk...)) != nil {
+			if send(chunk) != nil {
 				return false
 			}
 		}

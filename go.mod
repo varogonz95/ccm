@@ -7,7 +7,6 @@ require (
 	github.com/UserExistsError/conpty v0.1.4
 	github.com/creack/pty v1.1.24
 	github.com/gorilla/websocket v1.5.3
-	github.com/muesli/cancelreader v0.2.2
 	golang.org/x/sys v0.26.0
 	golang.org/x/term v0.25.0
 )
