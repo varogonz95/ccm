@@ -1,6 +1,15 @@
 # Installation
 
-ccm is a single static binary for Windows, Linux and macOS (amd64 and arm64). There are no prebuilt releases yet, so build it yourself.
+ccm is a single static binary for Windows, Linux and macOS (amd64 and arm64).
+
+## Prebuilt binaries
+
+Download the archive for your platform from [Releases](https://github.com/varogonz95/ccm/releases): `ccm_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows). `checksums.txt` has the SHA-256 of each archive.
+
+```sh
+sha256sum -c --ignore-missing checksums.txt
+tar xzf ccm_0.1.0_linux_amd64.tar.gz
+```
 
 ## From source
 

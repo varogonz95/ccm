@@ -1,0 +1,64 @@
+name: release
+
+# Push a tag to publish: git tag v0.1.0 && git push origin v0.1.0
+# Tags with a suffix (v0.1.0-rc.1) become pre-releases.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        run: make dist VERSION="${GITHUB_REF_NAME#v}"
+
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p out
+          for f in dist/ccm-*; do
+            base=$(basename "$f" .exe)       # ccm-linux-amd64
+            target=${base#ccm-}              # linux-amd64
+            name="ccm_${version}_${target//-/_}"
+            stage=$(mktemp -d)
+            if [[ $f == *.exe ]]; then
+              cp "$f" "$stage/ccm.exe"
+              cp README.md "$stage/"
+              (cd "$stage" && zip -q "$OLDPWD/out/$name.zip" ccm.exe README.md)
+            else
+              cp "$f" "$stage/ccm"
+              cp README.md "$stage/"
+              chmod +x "$stage/ccm"
+              tar -C "$stage" -czf "out/$name.tar.gz" ccm README.md
+            fi
+          done
+          (cd out && sha256sum * > checksums.txt)
+          ls -l out
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --verify-tag --generate-notes --title "ccm ${GITHUB_REF_NAME}" "${flags[@]}"

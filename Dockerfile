@@ -16,9 +16,11 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY . .
+# .git is not in the build context, so the version comes in as a build arg.
+ARG VERSION=dev
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make dist
+    make dist VERSION=${VERSION}
 
 FROM scratch AS dist
 COPY --from=build /src/dist/ /
