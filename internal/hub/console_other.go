@@ -2,4 +2,6 @@
 
 package hub
 
-func prepareConsole() (restore func()) { return func() {} }
+import "os"
+
+func prepareConsole(*os.File) (restore func()) { return func() {} }

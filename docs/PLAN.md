@@ -14,7 +14,7 @@ Goal: one terminal on any PC shows every Claude Code session on every LAN machin
 
 - [x] **M0, PTY spike.** Spawn in a PTY, I/O, resize, exit codes. Unix verified by tests; Windows compiles, needs a manual run.
 - [x] **M1, agent API.** REST create/list/kill, WebSocket attach, scrollback replay, token auth, repaint nudge on attach.
-- [~] **M2, hub.** Done: `hosts.toml`, `hosts`, `ls` across machines, `new`, `attach`, `kill`. Todo: bubbletea TUI (session list + attach + return to list), which needs a cancellable stdin reader.
+- [~] **M2, hub.** Done: `hosts.toml`, `hosts`, `ls` across machines, `new`, `attach`, `kill`, cancellable stdin reader in attach. Todo: bubbletea TUI (session list + attach + return to list).
 - [x] **Web UI (#5).** `ccm web`: loopback server, per-launch access key (localStorage, not a cookie), SSE overview, attach bridge, embedded UI (dashboard, terminal, new session, first run). Spec `docs/superpowers/specs/2026-10-01-web-ui-design.md`. Follow-ups: #6 LAN access, #7 per-agent UI, #8 edit hosts, #9 landing showcase.
 - [~] **Auto-agent PoC** (`docs/poc-auto-agent.md`). Claude Code plugin + `ccm mcp` stub: spawns a detached agent if none runs, and announces sessions started outside ccm (`/v1/external` leases, `external` in `ls`). Linux verified; Windows/macOS need the manual check in that doc.
 - [ ] **M3, status and alerts.** Agent launches claude with `--settings` injecting `Stop`, `Notification`, `UserPromptSubmit` hooks that run `ccm hook <event>` (reads `CCM_SESSION_ID`, posts to the agent). New states: working, idle, needs_input. Hub shows badges and rings the bell on needs_input.
@@ -30,6 +30,7 @@ Split-pane multi-view; mDNS discovery; TLS or Tailscale for off-LAN; session per
 2. Claude's TUI renders, arrow keys and Esc work, window resize reflows.
 3. Detach, re-attach: screen repaints cleanly.
 4. `ccm kill`: claude process gone in Task Manager.
+5. While attached, paste text and type non-ASCII (ñ, an emoji): it arrives intact. Click in the console (focus events) and keep typing: nothing is lost or stuck.
 
 ## Manual web UI check
 
