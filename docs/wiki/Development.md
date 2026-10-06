@@ -20,6 +20,20 @@ The end-to-end tests (`internal/agent/e2e_test.go`) start a real agent over HTTP
 
 For a manual loop, run `./ccm agent --claude /bin/sh` and point a `hosts.toml` at `http://localhost:7420`.
 
+## Branches
+
+`<type>/<ticket>/<title>`, cut from the latest `main`:
+
+- `type`: `feat`, `fix`, `chore` or `doc`
+- `ticket`: GitHub issue number; leave the segment out when there's no issue
+- `title`: short kebab-case summary
+
+```
+feat/6/web-lan-access
+fix/12/conpty-handle-after-close
+chore/release-workflow
+```
+
 ## Layout
 
 | Path | |
