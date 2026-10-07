@@ -10,7 +10,7 @@ import (
 )
 
 // Redirect is a private, short-lived HTML file that sends the browser to the
-// keyed URL. ccm web opens the file instead of the URL itself, so the access
+// keyed URL. clawsh web opens the file instead of the URL itself, so the access
 // key never appears on a command line, where other local users could read it
 // (e.g. /proc/<pid>/cmdline on Linux). Jupyter does the same.
 type Redirect struct {
@@ -21,7 +21,7 @@ type Redirect struct {
 // WriteRedirect writes a page that immediately navigates to target, with a
 // link as a fallback, into a new private temporary directory.
 func WriteRedirect(target string) (*Redirect, error) {
-	dir, err := os.MkdirTemp("", "ccm-web-") // created 0700
+	dir, err := os.MkdirTemp("", "clawsh-web-") // created 0700
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +50,10 @@ func redirectPage(target string) string {
 <meta charset="utf-8">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="refresh" content="0;url=` + u + `">
-<title>ccm</title>
+<title>clawsh</title>
 </head>
 <body>
-<p>Opening ccm… If nothing happens, <a href="` + u + `">open ccm</a>.</p>
+<p>Opening clawsh… If nothing happens, <a href="` + u + `">open clawsh</a>.</p>
 </body>
 </html>
 `

@@ -1,9 +1,9 @@
-BIN := ccm
-PKG := ./cmd/ccm
+BIN := clawsh
+PKG := ./cmd/clawsh
 PLATFORMS := windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 # Version without the leading "v": v0.1.0 -> 0.1.0, untagged -> dev.
 VERSION ?= $(patsubst v%,%,$(shell git describe --tags --always --dirty 2>/dev/null || echo dev))
-LDFLAGS := -X ccm/internal/api.Version=$(VERSION)
+LDFLAGS := -X github.com/varogonz95/clawsh/internal/api.Version=$(VERSION)
 
 .PHONY: build test vet dist docker-dist clean
 

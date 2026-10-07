@@ -1,6 +1,6 @@
-# ccm wiki
+# clawsh wiki
 
-ccm (Claude Code Manager) lets you see and drive every Claude Code session on every machine in your LAN from one terminal.
+clawsh lets you see and drive every Claude Code session on every machine in your LAN from one terminal.
 
 It is one binary with two roles:
 
@@ -8,7 +8,7 @@ It is one binary with two roles:
 - **hub** is the set of commands you type (`hosts`, `ls`, `new`, `attach`, `kill`, and `web` for a browser UI) from whichever terminal you're in. It reads a list of agents from `hosts.toml`.
 
 ```
-$ ccm ls
+$ clawsh ls
 TARGET         NAME      STATUS   VIEWERS  AGE    DIR
 desk/815856a6  api       running  0        2h14m  /home/alvaro/src/api
 laptop/3fa0c1  frontend  running  1        12m    C:\src\frontend
@@ -19,7 +19,7 @@ laptop/3fa0c1  frontend  running  1        12m    C:\src\frontend
 - [Installation](Installation.md): build from source or with Docker
 - [Quick start](Quick-Start.md): agents, `hosts.toml`, your first session
 - [Commands](Commands.md): every subcommand and flag
-- [Web UI](Web-UI.md): `ccm web`, the browser dashboard
+- [Web UI](Web-UI.md): `clawsh web`, the browser dashboard
 - [Configuration](Configuration.md): `hosts.toml`, tokens, file locations
 - [How it works](How-It-Works.md): sessions, scrollback, attach
 - [Protocol](Protocol.md): the agent's HTTP and WebSocket API

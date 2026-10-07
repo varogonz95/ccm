@@ -1,7 +1,7 @@
 # Commands
 
 ```
-ccm <command> [args]
+clawsh <command> [args]
 ```
 
 Flags may appear before or after positional arguments. For `new`, everything after a literal `--` goes to claude.
@@ -10,7 +10,7 @@ Flags may appear before or after positional arguments. For `new`, everything aft
 
 Run these on each machine that hosts sessions.
 
-### `ccm agent`
+### `clawsh agent`
 
 Runs the agent in the foreground. Ctrl-C (or SIGTERM) stops every session and exits.
 
@@ -18,34 +18,34 @@ Runs the agent in the foreground. Ctrl-C (or SIGTERM) stops every session and ex
 |---|---|---|
 | `--listen` | `:7420` | Address to listen on |
 | `--claude` | `claude` | Executable to run for every session (name on `PATH` or full path) |
-| `--token-file` | `<config dir>/ccm/agent.token` | Bearer token file, created on first run |
+| `--token-file` | `<config dir>/clawsh/agent.token` | Bearer token file, created on first run |
 | `--scrollback` | `2097152` (2 MiB) | Bytes of output kept per session for replay |
 
 The executable is fixed here. The API only lets clients add arguments, never choose what runs.
 
-### `ccm token`
+### `clawsh token`
 
 Prints the agent's token, creating it if needed. Accepts `--token-file`.
 
-### `ccm mcp`
+### `clawsh mcp`
 
 An MCP stdio server with no tools, run by Claude Code through the [plugin](Plugin.md). It starts a detached agent if none answers, and announces the session to the agent. Flags are listed on the plugin page.
 
 ## Hub side
 
-Run these anywhere. All accept `--config` (default `<config dir>/ccm/hosts.toml`; `ccm help` prints the exact path).
+Run these anywhere. All accept `--config` (default `<config dir>/clawsh/hosts.toml`; `clawsh help` prints the exact path).
 
 Sessions are addressed as `<host>/<id>`, where `host` is a name from `hosts.toml` and `id` is the session ID or any unique prefix of it.
 
-### `ccm hosts`
+### `clawsh hosts`
 
 Checks every configured agent: health, then an authenticated call. Timeout is 3 s per host.
 
-### `ccm ls [host]`
+### `clawsh ls [host]`
 
 Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (`running`, `exited(code)`, or `external` for sessions announced by the [plugin](Plugin.md)), `VIEWERS`, `AGE`, `DIR`. Unreachable hosts are reported on stderr after the table.
 
-### `ccm new <host> [flags] [-- claude args...]`
+### `clawsh new <host> [flags] [-- claude args...]`
 
 | Flag | Default | |
 |---|---|---|
@@ -55,16 +55,16 @@ Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (
 
 The session starts at your current terminal size.
 
-### `ccm attach <host>/<id>`
+### `clawsh attach <host>/<id>`
 
 Alias: `a`. Takes over your terminal until you press **Ctrl-]**, the session exits, or the connection drops. Needs an interactive terminal. Terminal resizes are forwarded.
 
-### `ccm kill <host>/<id>`
+### `clawsh kill <host>/<id>`
 
 Alias: `rm`. Asks the process to stop, forces it after 3 s, and removes the session from the agent. On Unix the whole process group gets the signal, so claude's children (MCP servers, shells) stop too.
 
-### `ccm web`
+### `clawsh web`
 
 Serves the browser UI on `127.0.0.1:7421` and opens it. Flags: `--listen` (loopback addresses only), `--no-open`, `--config`. See [Web UI](Web-UI.md).
 
-### `ccm version`, `ccm help`
+### `clawsh version`, `clawsh help`

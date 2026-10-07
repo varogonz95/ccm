@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"ccm/internal/agent"
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 func startAgent(t *testing.T, token string) string {

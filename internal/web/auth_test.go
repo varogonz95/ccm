@@ -66,7 +66,7 @@ func TestDeniedPageExplains(t *testing.T) {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	ct := resp.Header.Get("Content-Type")
-	if resp.StatusCode != http.StatusForbidden || !strings.HasPrefix(ct, "text/html") || !strings.Contains(string(body), "ccm web") {
+	if resp.StatusCode != http.StatusForbidden || !strings.HasPrefix(ct, "text/html") || !strings.Contains(string(body), "clawsh web") {
 		t.Fatalf("denied page: %d %s %q", resp.StatusCode, ct, body)
 	}
 }

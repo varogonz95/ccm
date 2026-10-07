@@ -1,14 +1,14 @@
 {
-  "name": "ccm",
+  "name": "clawsh",
   "owner": {
     "name": "varogonz95"
   },
-  "description": "ccm (Claude Code Manager) plugins.",
+  "description": "clawsh plugins.",
   "plugins": [
     {
-      "name": "ccm",
+      "name": "clawsh",
       "source": "./plugin",
-      "description": "Auto-start a ccm agent and announce Claude Code sessions to it."
+      "description": "Auto-start a clawsh agent and announce Claude Code sessions to it."
     }
   ]
 }

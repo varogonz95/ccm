@@ -15,12 +15,12 @@ import (
 )
 
 const (
-	msgNoKey     = "Open the link printed by ccm web in your terminal."
-	msgBadHost   = "This address isn't allowed. Open the link printed by ccm web in your terminal."
+	msgNoKey     = "Open the link printed by clawsh web in your terminal."
+	msgBadHost   = "This address isn't allowed. Open the link printed by clawsh web in your terminal."
 	msgBadOrigin = "Requests from other sites are not allowed."
 )
 
-// NewSecret returns the per-launch access key. The URL that ccm web opens
+// NewSecret returns the per-launch access key. The URL that clawsh web opens
 // carries it to the page, which keeps it in localStorage and sends it with
 // every API request.
 //
@@ -112,9 +112,9 @@ func deny(w http.ResponseWriter, r *http.Request, code int, msg string) {
 
 const deniedPage = `<!doctype html>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ccm</title>
+<title>clawsh</title>
 <body style="margin:0;padding:48px 24px;background:#0f161d;color:#e6edf3;font:16px/1.5 system-ui,sans-serif">
-<h1 style="font-size:28px;margin:0 0 12px">Can't open ccm here</h1>
+<h1 style="font-size:28px;margin:0 0 12px">Can't open clawsh here</h1>
 <p style="margin:0;color:#9fb0bf">%s</p>
 </body>
 `

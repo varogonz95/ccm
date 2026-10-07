@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ccm: Claude Code Manager</title>
+<title>clawsh: every Claude on your LAN, one shell</title>
 <meta name="description" content="See and drive every Claude Code session on every machine in your LAN from one terminal.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -212,28 +212,28 @@ footer a { color: var(--ink-soft); }
 <body>
 
 <header class="wrap top">
-  <a class="brand" href="#" aria-label="ccm home">ccm<span aria-hidden="true"></span></a>
+  <a class="brand" href="#" aria-label="clawsh home">clawsh<span aria-hidden="true"></span></a>
   <nav aria-label="Main">
-    <a href="https://github.com/varogonz95/ccm/blob/main/docs/wiki/Home.md">Wiki</a>
-    <a href="https://github.com/varogonz95/ccm">GitHub</a>
+    <a href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Home.md">Wiki</a>
+    <a href="https://github.com/varogonz95/clawsh">GitHub</a>
   </nav>
 </header>
 
 <main>
   <div class="wrap hero">
     <h1>Every Claude Code session on every machine, one terminal.</h1>
-    <p class="lede">Start claude on your desktop from your laptop, leave it working, and attach again from anywhere on your network. ccm is a single binary for Windows, Linux and macOS.</p>
+    <p class="lede">Start claude on your desktop from your laptop, leave it working, and attach again from anywhere on your network. clawsh is a single binary for Windows, Linux and macOS.</p>
     <div class="actions">
-      <a class="btn primary" href="https://github.com/varogonz95/ccm/blob/main/docs/wiki/Quick-Start.md">Set up in five minutes</a>
-      <a class="btn ghost" href="https://github.com/varogonz95/ccm">View source</a>
+      <a class="btn primary" href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Quick-Start.md">Set up in five minutes</a>
+      <a class="btn ghost" href="https://github.com/varogonz95/clawsh">View source</a>
     </div>
 
-    <div class="term" role="group" aria-label="ccm demo">
+    <div class="term" role="group" aria-label="clawsh demo">
       <div class="term-bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i><b aria-hidden="true">laptop: ~</b>
         <div class="scenes" hidden></div>
       </div>
-      <p class="sr-only" id="term-desc">ccm ls lists sessions on three machines: desk, laptop and studio.</p>
-<pre aria-hidden="true"><span class="prompt">$</span> ccm ls
+      <p class="sr-only" id="term-desc">clawsh ls lists sessions on three machines: desk, laptop and studio.</p>
+<pre aria-hidden="true"><span class="prompt">$</span> clawsh ls
 <span class="dim">TARGET           NAME       STATUS     VIEWERS  AGE    DIR</span>
 <span class="h-desk">desk/815856a6</span>    api        running    0        2h14m  /home/alvaro/src/api
 <span class="h-desk">desk/c01d9e42</span>    infra      running    0        47m    /home/alvaro/src/infra
@@ -250,18 +250,18 @@ footer a { color: var(--ink-soft); }
         <p class="soft">The same binary plays both parts.</p>
         <div class="roles">
           <div class="agent">
-            <h3><code>ccm agent</code></h3>
+            <h3><code>clawsh agent</code></h3>
             <p>Runs on each machine that hosts sessions. It keeps claude running inside a terminal of its own, so a session carries on after you disconnect, and remembers recent output for when you come back.</p>
           </div>
           <div>
-            <h3><code>ccm ls</code>, <code>new</code>, <code>attach</code>, <code>kill</code></h3>
+            <h3><code>clawsh ls</code>, <code>new</code>, <code>attach</code>, <code>kill</code></h3>
             <p>Run from any terminal. They read your list of machines and talk to each agent over your LAN. Attaching takes over your terminal; <kbd>Ctrl</kbd>+<kbd>]</kbd> hands it back and leaves claude running.</p>
           </div>
         </div>
       </div>
 
       <svg class="diagram" viewBox="0 0 520 380" role="img" aria-labelledby="dg-t">
-        <title id="dg-t">Three machines, desk, laptop and studio, each run a ccm agent and connect to the terminal you're typing in.</title>
+        <title id="dg-t">Three machines, desk, laptop and studio, each run a clawsh agent and connect to the terminal you're typing in.</title>
         <path class="cable" d="M170 62 C 290 62, 300 190, 340 190" stroke="var(--desk)"/>
         <path class="cable" d="M170 190 L 340 190" stroke="var(--laptop)" transform="translate(0 0)"/>
         <path class="cable" d="M170 318 C 290 318, 300 190, 340 190" stroke="var(--studio)"/>
@@ -283,7 +283,7 @@ footer a { color: var(--ink-soft); }
 
         <rect class="hub" x="340" y="130" width="170" height="120" rx="12"/>
         <text class="hub-t" x="360" y="172">your terminal</text>
-        <text class="sub hub-s" x="360" y="200">$ ccm attach</text>
+        <text class="sub hub-s" x="360" y="200">$ clawsh attach</text>
         <text class="sub hub-s" x="360" y="220">  desk/8158</text>
       </svg>
     </div>
@@ -297,18 +297,18 @@ footer a { color: var(--ink-soft); }
         <li>
           <h3>Build every platform</h3>
           <p>Binaries for Windows, Linux and macOS land in <code>dist/</code>.</p>
-<pre>git clone https://github.com/varogonz95/ccm.git && cd ccm
+<pre>git clone https://github.com/varogonz95/clawsh.git && cd clawsh
 make dist            # or: make docker-dist</pre>
         </li>
         <li>
           <h3>Start an agent on each machine</h3>
           <p>It listens on port 7420 and creates a token on first run.</p>
-<pre>ccm agent
-ccm token            # print it</pre>
+<pre>clawsh agent
+clawsh token            # print it</pre>
         </li>
         <li>
           <h3>List your machines</h3>
-          <p>On the machine you drive from, add each agent to <code>hosts.toml</code>. <code>ccm help</code> shows where it goes.</p>
+          <p>On the machine you drive from, add each agent to <code>hosts.toml</code>. <code>clawsh help</code> shows where it goes.</p>
 <pre>[[host]]
 name = "desk"
 url = "http://192.168.1.20:7420"
@@ -317,8 +317,8 @@ token = "paste-token-from-desk"</pre>
         <li>
           <h3>Start a session and attach</h3>
           <p>Anything after <code>--</code> is passed to claude.</p>
-<pre>ccm new desk --dir ~/src/api -- --resume
-ccm attach desk/8158   # an ID prefix is enough</pre>
+<pre>clawsh new desk --dir ~/src/api -- --resume
+clawsh attach desk/8158   # an ID prefix is enough</pre>
         </li>
       </ol>
     </div>
@@ -331,14 +331,14 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
         <div class="warn">
           <h3>A token lets its holder run claude on that machine</h3>
           <p>Traffic is plain HTTP, so keep agents on a network you trust. Agents only ever run the claude executable they were started with; the API can add arguments but can't choose the program.</p>
-          <p><a href="https://github.com/varogonz95/ccm/blob/main/docs/wiki/Security.md">Read the security notes</a></p>
+          <p><a href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Security.md">Read the security notes</a></p>
         </div>
         <div>
           <h3>What doesn't work yet</h3>
           <ul>
-            <li>Only sessions started through ccm show up, not claude launched in a plain terminal.</li>
+            <li>Only sessions started through clawsh show up, not claude launched in a plain terminal.</li>
             <li>Stopping an agent stops its sessions. <code>claude --resume</code> recovers the conversation.</li>
-            <li>Status is running or exited. Working, idle and needs-input are next on the <a href="https://github.com/varogonz95/ccm/blob/main/docs/wiki/Roadmap.md">roadmap</a>.</li>
+            <li>Status is running or exited. Working, idle and needs-input are next on the <a href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Roadmap.md">roadmap</a>.</li>
           </ul>
         </div>
       </div>
@@ -348,28 +348,28 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
 
 <footer>
   <div class="wrap">
-    <span>ccm, a cross-machine manager for Claude Code. Not affiliated with Anthropic.</span>
-    <span><a href="https://github.com/varogonz95/ccm/blob/main/docs/wiki/Home.md">Wiki</a> &nbsp; <a href="https://github.com/varogonz95/ccm">GitHub</a></span>
+    <span>clawsh, a cross-machine manager for Claude Code. Not affiliated with Anthropic.</span>
+    <span><a href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Home.md">Wiki</a> &nbsp; <a href="https://github.com/varogonz95/clawsh">GitHub</a></span>
   </div>
 </footer>
 
 <script>
 (() => {
-  // Each scene mirrors the real CLI's output format (cmd/ccm/main.go, hub/attach.go).
+  // Each scene mirrors the real CLI's output format (cmd/clawsh/main.go, hub/attach.go).
   const D = '<span class="h-desk">', L = '<span class="h-laptop">', S = '<span class="h-studio">', E = '</span>';
   const sess = t => `<span class="sess">${t}</span>`;
   const key = { html: '<span class="key">Ctrl-]</span>', wait: 700 };
   const scenes = [
-    { label: "hosts", cmd: "ccm hosts",
-      desc: "ccm hosts checks that every configured agent is reachable: desk on Linux, laptop on Windows, studio on macOS.",
+    { label: "hosts", cmd: "clawsh hosts",
+      desc: "clawsh hosts checks that every configured agent is reachable: desk on Linux, laptop on Windows, studio on macOS.",
       out: [
         '<span class="dim">HOST    URL                        STATUS</span>',
         `${D}desk${E}    http://192.168.1.20:7420   <span class="ok">ok</span> (desk, linux, v0.1.0)`,
         `${L}laptop${E}  http://192.168.1.31:7420   <span class="ok">ok</span> (laptop, windows, v0.1.0)`,
         `${S}studio${E}  http://192.168.1.42:7420   <span class="ok">ok</span> (studio, darwin, v0.1.0)`,
       ] },
-    { label: "ls", cmd: "ccm ls",
-      desc: "ccm ls lists sessions on three machines: desk, laptop and studio.",
+    { label: "ls", cmd: "clawsh ls",
+      desc: "clawsh ls lists sessions on three machines: desk, laptop and studio.",
       out: [
         '<span class="dim">TARGET           NAME       STATUS     VIEWERS  AGE    DIR</span>',
         `${D}desk/815856a6${E}    api        running    0        2h14m  /home/alvaro/src/api`,
@@ -377,8 +377,8 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
         `${L}laptop/3fa0c1b7${E}  frontend   running    1        12m    C:\\src\\frontend`,
         `${S}studio/9e27aa10${E}  docs       exited(0)  0        3h02m  /Users/alvaro/src/docs`,
       ] },
-    { label: "new", cmd: "ccm new desk --dir ~/src/billing",
-      desc: "ccm new starts claude on desk in ~/src/billing and attaches; Ctrl-] detaches and leaves it running.",
+    { label: "new", cmd: "clawsh new desk --dir ~/src/billing",
+      desc: "clawsh new starts claude on desk in ~/src/billing and attaches; Ctrl-] detaches and leaves it running.",
       out: [
         `created ${D}desk/5d0e2b19${E} in /home/alvaro/src/billing`,
         sess('<span class="dim">&gt;</span> add retries to the invoice webhook'),
@@ -387,8 +387,8 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
         key,
         `<span class="dim">[detached from desk/5d0e2b19]</span>`,
       ] },
-    { label: "attach", cmd: "ccm attach laptop/3fa0",
-      desc: "ccm attach laptop/3fa0 replays recent output from the frontend session, then hands the terminal back on Ctrl-].",
+    { label: "attach", cmd: "clawsh attach laptop/3fa0",
+      desc: "clawsh attach laptop/3fa0 replays recent output from the frontend session, then hands the terminal back on Ctrl-].",
       out: [
         sess('● Updated src/components/Nav.tsx'),
         sess('● Ran npm test: 42 passed'),
@@ -397,8 +397,8 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
         key,
         `<span class="dim">[detached from laptop/3fa0]</span>`,
       ] },
-    { label: "kill", cmd: "ccm kill studio/9e27",
-      desc: "ccm kill studio/9e27 stops and removes the finished docs session on studio.",
+    { label: "kill", cmd: "clawsh kill studio/9e27",
+      desc: "clawsh kill studio/9e27 stops and removes the finished docs session on studio.",
       out: [ `killed ${S}studio/9e27${E}` ] },
   ];
 
@@ -414,7 +414,7 @@ ccm attach desk/8158   # an ID prefix is enough</pre>
     const b = document.createElement("button");
     b.type = "button";
     b.textContent = s.label;
-    b.setAttribute("aria-label", `Show ccm ${s.label}`);
+    b.setAttribute("aria-label", `Show clawsh ${s.label}`);
     b.addEventListener("click", () => start(i));
     bar.append(b);
     return b;

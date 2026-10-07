@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 func del(t *testing.T, c *http.Client, url string) int {

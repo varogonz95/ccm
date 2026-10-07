@@ -7,14 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 // DefaultExternalTTL is how long an announced external session is kept
-// without a renewal. `ccm mcp` renews every ExternalTTL/3.
+// without a renewal. `clawsh mcp` renews every ExternalTTL/3.
 const DefaultExternalTTL = 90 * time.Second
 
-// externals tracks sessions announced by `ccm mcp` stubs running inside
+// externals tracks sessions announced by `clawsh mcp` stubs running inside
 // Claude Code sessions the agent does not own.
 type externals struct {
 	ttl time.Duration

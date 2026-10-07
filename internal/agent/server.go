@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 const (

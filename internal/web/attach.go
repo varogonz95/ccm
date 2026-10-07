@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 // Close codes sent to the browser when the bridge can't reach the session.

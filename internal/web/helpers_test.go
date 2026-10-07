@@ -19,8 +19,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"ccm/internal/agent"
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 const testSecret = "test-secret"

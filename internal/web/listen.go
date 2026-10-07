@@ -18,5 +18,5 @@ func CheckLoopback(addr string) error {
 	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
 		return nil
 	}
-	return fmt.Errorf("--listen %s: ccm web only listens on loopback (e.g. 127.0.0.1:7421); LAN access is issue #6", addr)
+	return fmt.Errorf("--listen %s: clawsh web only listens on loopback (e.g. 127.0.0.1:7421); LAN access is issue #6", addr)
 }

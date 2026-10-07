@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 func msgUnknownHost(name string) error { return fmt.Errorf("unknown machine %q", name) }

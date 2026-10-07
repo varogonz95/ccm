@@ -2,8 +2,8 @@
 //
 // Transport:
 //   - REST (JSON) for session lifecycle: /v1/health, /v1/sessions, /v1/sessions/{id}
-//   - REST (JSON) for external sessions (claude started outside ccm, announced
-//     by `ccm mcp`): GET /v1/external, PUT/DELETE /v1/external/{id}
+//   - REST (JSON) for external sessions (claude started outside clawsh, announced
+//     by `clawsh mcp`): GET /v1/external, PUT/DELETE /v1/external/{id}
 //   - WebSocket for attach: /v1/sessions/{id}/attach
 //     binary frames = raw terminal bytes (both directions)
 //     text frames   = JSON Control messages
@@ -13,7 +13,7 @@ package api
 
 import "time"
 
-// Version is set at build time: -ldflags "-X ccm/internal/api.Version=1.2.3"
+// Version is set at build time: -ldflags "-X github.com/varogonz95/clawsh/internal/api.Version=1.2.3"
 // (the Makefile derives it from the latest git tag).
 var Version = "dev"
 
@@ -52,8 +52,8 @@ type CreateRequest struct {
 }
 
 // External is a Claude Code session the agent does not own: claude was
-// started in a plain terminal and its `ccm mcp` stub announced it. It is
-// listed but cannot be attached or killed through ccm. Entries are a lease:
+// started in a plain terminal and its `clawsh mcp` stub announced it. It is
+// listed but cannot be attached or killed through clawsh. Entries are a lease:
 // the announcer re-sends PUT periodically and the agent forgets entries not
 // renewed within its TTL.
 type External struct {

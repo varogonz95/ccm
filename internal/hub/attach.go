@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/websocket"
 	"golang.org/x/term"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 // DetachKey is Ctrl-] (0x1d), same as telnet.

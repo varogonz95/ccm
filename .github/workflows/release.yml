@@ -35,20 +35,20 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           mkdir -p out
-          for f in dist/ccm-*; do
-            base=$(basename "$f" .exe)       # ccm-linux-amd64
-            target=${base#ccm-}              # linux-amd64
-            name="ccm_${version}_${target//-/_}"
+          for f in dist/clawsh-*; do
+            base=$(basename "$f" .exe)       # clawsh-linux-amd64
+            target=${base#clawsh-}              # linux-amd64
+            name="clawsh_${version}_${target//-/_}"
             stage=$(mktemp -d)
             if [[ $f == *.exe ]]; then
-              cp "$f" "$stage/ccm.exe"
+              cp "$f" "$stage/clawsh.exe"
               cp README.md "$stage/"
-              (cd "$stage" && zip -q "$OLDPWD/out/$name.zip" ccm.exe README.md)
+              (cd "$stage" && zip -q "$OLDPWD/out/$name.zip" clawsh.exe README.md)
             else
-              cp "$f" "$stage/ccm"
+              cp "$f" "$stage/clawsh"
               cp README.md "$stage/"
-              chmod +x "$stage/ccm"
-              tar -C "$stage" -czf "out/$name.tar.gz" ccm README.md
+              chmod +x "$stage/clawsh"
+              tar -C "$stage" -czf "out/$name.tar.gz" clawsh README.md
             fi
           done
           (cd out && sha256sum * > checksums.txt)
@@ -61,4 +61,4 @@ jobs:
           flags=()
           [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
           gh release create "$GITHUB_REF_NAME" out/* \
-            --verify-tag --generate-notes --title "ccm ${GITHUB_REF_NAME}" "${flags[@]}"
+            --verify-tag --generate-notes --title "clawsh ${GITHUB_REF_NAME}" "${flags[@]}"
