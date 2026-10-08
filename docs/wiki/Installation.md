@@ -2,6 +2,19 @@
 
 clawsh is a single static binary for Windows, Linux and macOS (amd64 and arm64).
 
+## npm
+
+With Node 18 or newer:
+
+```sh
+npm i -g clawsh      # installs the clawsh command
+npx clawsh ls        # or run it without installing
+```
+
+The `clawsh` package is a small launcher. npm also installs the one platform package that matches your machine (`clawsh-linux-x64`, `clawsh-darwin-arm64`, `clawsh-win32-x64`, ...), which holds the real binary. If that package was skipped (pnpm or bun blocking it, `--omit=optional`, a lockfile made on another OS), the first run downloads it from your npm registry, checks it against the registry's sha512, and caches it.
+
+Behind a proxy or a registry that blocks the download, point the launcher at a binary you already have: `CLAWSH_BINARY_PATH=/path/to/clawsh`. On Node 24+, `NODE_USE_ENV_PROXY=1` makes the download honor `HTTPS_PROXY`.
+
 ## Prebuilt binaries
 
 Download the archive for your platform from [Releases](https://github.com/varogonz95/clawsh/releases): `clawsh_<version>_<os>_<arch>.tar.gz` (`.zip` on Windows), plus `checksums.txt`, which has the SHA-256 of each archive. Each archive unpacks into a directory of the same name holding `clawsh` and the README.

@@ -30,7 +30,21 @@ To publish, bump `plugin/.claude-plugin/plugin.json` to the new version (the rel
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-`.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests.
+`.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`, the npm launcher tests), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes. Then it publishes the same binaries to npm: `npm/build.mjs` stages one `clawsh-<os>-<cpu>` package per platform plus the `clawsh` launcher (`npm/clawsh/`), all at the tag's version. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases on GitHub and the `next` dist-tag on npm. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests.
+
+### npm trusted publishing
+
+npm publishing uses [trusted publishing](https://docs.npmjs.com/trusted-publishers): the workflow proves who it is with GitHub's OIDC token, so there's no npm token secret, and every version gets a provenance statement. Each of the seven packages needs `varogonz95/clawsh` with workflow `release.yml` added as a trusted publisher on npmjs.com (package Settings → Trusted publishing). npm only lets you do that for a package that already exists, so the first time:
+
+```sh
+make dist VERSION=0.1.0
+node npm/build.mjs 0.1.0
+for d in out/npm/clawsh-*/ out/npm/clawsh/; do npm publish "$d" --access public; done   # logged in with npm login
+```
+
+then add the trusted publisher to each package. Later releases publish from CI; versions already on npm are skipped, so re-running the workflow finishes a partial publish.
+
+To try the packages locally without publishing: `npm pack` the staged directories and `npm install` the tarballs into a scratch project.
 
 ## Layout
 

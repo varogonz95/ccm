@@ -19,3 +19,4 @@ jobs:
           go-version-file: go.mod
       - run: make vet
       - run: make test
+      - run: node --test npm/test/*.test.mjs
