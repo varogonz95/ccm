@@ -49,3 +49,4 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - Keep dependencies minimal; prefer the stdlib.
 - New endpoints or control messages: add types to `internal/api` first, then a test in `e2e_test.go`.
 - `e2e_test.go` is `!windows`-tagged; Windows behavior needs the manual check listed in `docs/PLAN.md`.
+- New ideas from the user become GitHub issues (labels `enhancement`, `needs_refinement`); split large ideas into a parent issue with phased sub-issues. Link them from `docs/PLAN.md` and any spec.
