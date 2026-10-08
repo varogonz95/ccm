@@ -13,8 +13,6 @@ package api
 
 import "time"
 
-const Version = "0.1.0"
-
 type Health struct {
 	Host    string `json:"host"`
 	OS      string `json:"os"`

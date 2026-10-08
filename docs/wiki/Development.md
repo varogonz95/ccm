@@ -20,6 +20,18 @@ The end-to-end tests (`internal/agent/e2e_test.go`) start a real agent over HTTP
 
 For a manual loop, run `./ccm agent --claude /bin/sh` and point a `hosts.toml` at `http://localhost:7420`.
 
+## Releases
+
+`ccm version` prints the version baked in at build time. The Makefile takes it from the latest `v*` tag (`v0.1.0` → `0.1.0`, later commits `0.1.0-3-gabc1234`); before the first tag it's `dev+<commit>`. Override with `make dist VERSION=1.2.3`. A plain `go build` from a checkout reports `dev+<commit>` too (Go records the commit in the binary), and `dev` when there's no git information. `ccm hosts` shows release versions with a `v` prefix and dev builds as they are.
+
+To publish, bump `plugin/.claude-plugin/plugin.json` to the new version (the release fails if it doesn't match the tag), then push a tag:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+`.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests.
+
 ## Layout
 
 | Path | |

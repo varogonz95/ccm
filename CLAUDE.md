@@ -27,6 +27,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `make vet` — vets for linux, windows, darwin. Run it after any change touching `ptyx`, `hub/console_*`, or syscalls.
 - `make dist` — cross-compile all platforms into `dist/`.
 - `make docker-dist` — same cross-compile inside Docker (`Dockerfile`, buildx), exported to `dist/`; no local Go needed.
+- Version: `api.Version` is set via `-ldflags -X` from `git describe` (override `VERSION=`). Releases: push a `v*` tag; `.github/workflows/release.yml` runs CI, `make dist`, and publishes archives + `checksums.txt`.
 - Local manual run: `./ccm agent --claude /bin/sh` (any command works as the session program), then point a `hosts.toml` (path from `ccm help`; example in `hosts.example.toml`) at `http://localhost:7420` with the token from `./ccm token`.
 
 ## Architecture

@@ -1,0 +1,74 @@
+name: release
+
+# Push a tag to publish: git tag v0.1.0 && git push origin v0.1.0
+# Tags with a suffix (v0.1.0-rc.1) become pre-releases.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Check plugin version
+        run: |
+          plugin=$(jq -r .version plugin/.claude-plugin/plugin.json)
+          if [[ $plugin != "${GITHUB_REF_NAME#v}" ]]; then
+            echo "::error file=plugin/.claude-plugin/plugin.json::version is $plugin, tag is $GITHUB_REF_NAME; bump it before tagging"
+            exit 1
+          fi
+
+      - name: Build
+        run: make dist VERSION="${GITHUB_REF_NAME#v}"
+
+      # One archive per platform, each unpacking into its own directory:
+      # ccm_<version>_<os>_<arch>/{ccm[.exe],README.md}
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          work=$(mktemp -d)
+          trap 'rm -rf "$work"' EXIT
+          mkdir -p out
+          for f in dist/ccm-*; do
+            target=$(basename "$f" .exe)       # ccm-linux-amd64
+            target=${target#ccm-}              # linux-amd64
+            name="ccm_${version}_${target//-/_}"
+            ext=; [[ $f == *.exe ]] && ext=.exe
+            mkdir "$work/$name"
+            install -m 755 "$f" "$work/$name/ccm$ext"
+            cp README.md "$work/$name/"
+            if [[ $ext == .exe ]]; then
+              (cd "$work" && zip -qr "$OLDPWD/out/$name.zip" "$name")
+            else
+              tar -C "$work" -czf "out/$name.tar.gz" "$name"
+            fi
+          done
+          (cd out && sha256sum * > checksums.txt)
+          ls -l out
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          flags=()
+          [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" out/* \
+            --verify-tag --generate-notes --title "ccm ${GITHUB_REF_NAME}" "${flags[@]}"
