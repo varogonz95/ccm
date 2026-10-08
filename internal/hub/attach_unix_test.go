@@ -5,6 +5,7 @@ package hub
 import (
 	"bytes"
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -18,12 +19,29 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// smallBuffer pins both ends of the fake agent's TCP connection to small
+// socket buffers. Left alone, Linux autotunes them up to megabytes, so how
+// long a sender takes to stall against a peer that stops reading depends on
+// how fast the machine is; on a slow CI runner it can exceed the tests'
+// deadlines. With fixed buffers it stalls after a few KB everywhere.
+const smallBuffer = 8 << 10
+
+type smallBufferListener struct{ net.Listener }
+
+func (l smallBufferListener) Accept() (net.Conn, error) {
+	c, err := l.Listener.Accept()
+	if tc, ok := c.(*net.TCPConn); ok {
+		tc.SetReadBuffer(smallBuffer)
+	}
+	return c, err
+}
+
 // fakeAgent serves the attach websocket with handle; the handler returns
 // when the test ends.
 func fakeAgent(t *testing.T, handle func(*websocket.Conn, <-chan struct{})) *Client {
 	t.Helper()
 	release := make(chan struct{})
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := (&websocket.Upgrader{}).Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -31,8 +49,24 @@ func fakeAgent(t *testing.T, handle func(*websocket.Conn, <-chan struct{})) *Cli
 		defer conn.Close()
 		handle(conn, release)
 	}))
+	srv.Listener = smallBufferListener{srv.Listener}
+	srv.Start()
 	t.Cleanup(srv.Close)
 	t.Cleanup(func() { close(release) })
+
+	// Client uses websocket.DefaultDialer; hub tests don't run in parallel.
+	d := *websocket.DefaultDialer
+	d.NetDialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		c, err := (&net.Dialer{}).DialContext(ctx, network, addr)
+		if tc, ok := c.(*net.TCPConn); ok {
+			tc.SetWriteBuffer(smallBuffer)
+		}
+		return c, err
+	}
+	old := websocket.DefaultDialer
+	websocket.DefaultDialer = &d
+	t.Cleanup(func() { websocket.DefaultDialer = old })
+
 	return NewClient(Host{Name: "t", URL: srv.URL})
 }
 
