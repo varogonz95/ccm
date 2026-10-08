@@ -30,4 +30,4 @@ To keep the access key off the command line, the browser is opened through a sho
 
 - Opens only on the computer running `clawsh web` (see [Security](Security.md)). Phones and other devices: issue #6.
 - Editing machines from the page: issue #8.
-- Dark theme only.
+- The theme follows your system's light or dark setting; there's no switch on the page.

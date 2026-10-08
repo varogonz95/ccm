@@ -13,7 +13,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `internal/ptyx` — PTY abstraction; `_unix.go` (creack/pty) and `_windows.go` (ConPTY).
 - `internal/agent` — session manager, HTTP/WebSocket server, token, scrollback.
 - `internal/hub` — hosts config, agent client, terminal attach.
-- `internal/web` — `clawsh web`: loopback server with access-key auth (header or `?k=`), SSE overview, attach bridge, and the embedded UI in `static/` (plain JS, vendored xterm.js; see `static/vendor/VERSIONS`).
+- `internal/web` — `clawsh web`: loopback server with access-key auth (header or `?k=`), SSE overview, attach bridge, and the embedded UI in `static/` (plain JS, vendored xterm.js and fonts; see `static/vendor/VERSIONS`). The look lives in `app.css`: `app.js` reads host colors and terminal colors/font from its `:root` variables, so a restyle needs no JS.
 - `internal/paths` — per-user config dir (`<config>/clawsh`, falling back to the pre-rename `<config>/ccm`).
 - `internal/mcp` — `clawsh mcp`: tool-less MCP stdio stub run by the Claude Code plugin; spawns a detached agent and announces the session (`/v1/external` lease). PoC, see `docs/poc-auto-agent.md`.
 - `plugin/` — the Claude Code plugin (`.mcp.json` runs `clawsh mcp`); `.claude-plugin/marketplace.json` at the root makes the repo a marketplace.

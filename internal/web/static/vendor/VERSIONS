@@ -1,7 +1,11 @@
 Vendored for the clawsh web UI. Update by re-running the curl commands in
 docs/superpowers/plans/2026-10-01-web-ui.md (Task 7, Step 1) with new versions.
+The Bagel Fat One and Atkinson Hyperlegible files come from `npm pack @fontsource/<name>`
+(files/<name>-latin-<weight>-normal.woff2).
 
 xterm.js, xterm.css   @xterm/xterm 5.5.0        MIT   https://github.com/xtermjs/xterm.js
 addon-fit.js          @xterm/addon-fit 0.10.0   MIT   https://github.com/xtermjs/xterm.js
-fonts/bricolage-grotesque.woff2  @fontsource-variable/bricolage-grotesque 5.1.0  OFL-1.1  latin, variable weight
+fonts/bagel-fat-one.woff2            @fontsource/bagel-fat-one 5.3.0           OFL-1.1  latin 400
+fonts/atkinson-hyperlegible-400.woff2 @fontsource/atkinson-hyperlegible 5.3.0  OFL-1.1  latin 400
+fonts/atkinson-hyperlegible-700.woff2 @fontsource/atkinson-hyperlegible 5.3.0  OFL-1.1  latin 700
 fonts/jetbrains-mono.woff2       @fontsource-variable/jetbrains-mono 5.1.1       OFL-1.1  latin, variable weight
