@@ -1,6 +1,6 @@
 # Session transfer between machines (`clawsh move`)
 
-Status: idea, design draft. Depends on M3 (hooks) for idle detection and the claude session id.
+Issues: #21 (sub-issues #22–#25). Status: design draft. Depends on M3 (hooks) for idle detection and the claude session id.
 
 ## Goal
 
