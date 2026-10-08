@@ -13,8 +13,10 @@ LDFLAGS := -X github.com/varogonz95/clawsh/internal/api.Version=$(VERSION)
 build:
 	go build -ldflags="$(LDFLAGS)" -o $(BIN) $(PKG)
 
+# A hung test fails after 3m with every goroutine's stack (the suite takes
+# well under a minute) instead of running into go test's silent 11m kill.
 test:
-	go test -race ./...
+	go test -race -timeout 3m ./...
 
 vet:
 	go vet ./...
