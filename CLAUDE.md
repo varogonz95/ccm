@@ -49,4 +49,12 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - Keep dependencies minimal; prefer the stdlib.
 - New endpoints or control messages: add types to `internal/api` first, then a test in `e2e_test.go`.
 - `e2e_test.go` is `!windows`-tagged; Windows behavior needs the manual check listed in `docs/PLAN.md`.
-- New ideas from the user become GitHub issues (labels `enhancement`, `needs_refinement`); split large ideas into a parent issue with phased sub-issues. Link them from `docs/PLAN.md` and any spec.
+
+## Issues
+
+Issues feed an automated refine-then-implement pipeline, so their labels and shape matter.
+
+- New ideas from the user become GitHub issues (`enhancement` or `bug`, plus `needs_refinement`). Split large ideas into a parent issue with phased sub-issues, each one PR. Link them from `docs/PLAN.md` and any spec.
+- Every issue that isn't refined carries `needs_refinement`.
+- Refining an issue means rewriting it to `.github/ISSUE_TEMPLATE/agent-ready.md` (goal, context, scope in/out, decisions, rules and limits, steps, checkable acceptance criteria, manual checks, dependencies) with no open questions left. Then swap `needs_refinement` for `agent-ready`. If a decision needs the user, ask and keep `needs_refinement`.
+- An agent picking up an `agent-ready` issue skips it while any listed dependency is open, follows its scope strictly, and files anything out of scope as a new `needs_refinement` issue.
