@@ -20,7 +20,7 @@ COPY . .
 ARG VERSION=dev
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    make dist VERSION=${VERSION}
+    make dist VERSION="${VERSION:-dev}"
 
 FROM scratch AS dist
 COPY --from=build /src/dist/ /
