@@ -13,10 +13,6 @@ package api
 
 import "time"
 
-// Version is set at build time: -ldflags "-X ccm/internal/api.Version=1.2.3"
-// (the Makefile derives it from the latest git tag).
-var Version = "dev"
-
 type Health struct {
 	Host    string `json:"host"`
 	OS      string `json:"os"`

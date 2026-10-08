@@ -253,7 +253,7 @@ func runHosts(args []string) error {
 		var status string
 		switch {
 		case o.Online:
-			status = fmt.Sprintf("ok (%s, %s, v%s)", o.Health.Host, o.Health.OS, o.Health.Version)
+			status = fmt.Sprintf("ok (%s, %s, %s)", o.Health.Host, o.Health.OS, api.DisplayVersion(o.Health.Version))
 		case o.Health == nil:
 			status = "unreachable: " + o.Error
 		default:

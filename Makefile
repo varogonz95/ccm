@@ -1,8 +1,11 @@
 BIN := ccm
 PKG := ./cmd/ccm
 PLATFORMS := windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
-# Version without the leading "v": v0.1.0 -> 0.1.0, untagged -> dev.
-VERSION ?= $(patsubst v%,%,$(shell git describe --tags --always --dirty 2>/dev/null || echo dev))
+# Version without the leading "v". Only v* tags count: on v0.1.0 -> 0.1.0, after
+# it -> 0.1.0-3-gabc1234; before any v* tag -> dev+<commit>; no git -> dev.
+# A ".dirty"/"-dirty" suffix marks uncommitted changes. An empty VERSION= means dev.
+VERSION ?= $(or $(patsubst v%,%,$(shell git describe --tags --match 'v[0-9]*' --dirty 2>/dev/null)),$(addprefix dev+,$(shell git describe --always --abbrev=12 --dirty=.dirty --exclude='*' 2>/dev/null)),dev)
+override VERSION := $(or $(strip $(VERSION)),dev)
 LDFLAGS := -X ccm/internal/api.Version=$(VERSION)
 
 .PHONY: build test vet dist docker-dist clean

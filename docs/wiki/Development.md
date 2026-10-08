@@ -22,9 +22,9 @@ For a manual loop, run `./ccm agent --claude /bin/sh` and point a `hosts.toml` a
 
 ## Releases
 
-`ccm version` prints the version baked in at build time. The Makefile takes it from `git describe` (`v0.1.0` → `0.1.0`, untagged builds get the commit); override with `make dist VERSION=1.2.3`. A plain `go build` reports `dev`.
+`ccm version` prints the version baked in at build time. The Makefile takes it from the latest `v*` tag (`v0.1.0` → `0.1.0`, later commits `0.1.0-3-gabc1234`); before the first tag it's `dev+<commit>`. Override with `make dist VERSION=1.2.3`. A plain `go build` from a checkout reports `dev+<commit>` too (Go records the commit in the binary), and `dev` when there's no git information. `ccm hosts` shows release versions with a `v` prefix and dev builds as they are.
 
-To publish, bump `plugin/.claude-plugin/plugin.json` to match, then push a tag:
+To publish, bump `plugin/.claude-plugin/plugin.json` to the new version (the release fails if it doesn't match the tag), then push a tag:
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
