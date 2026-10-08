@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 // OverviewTimeout bounds how long one host may take to answer.

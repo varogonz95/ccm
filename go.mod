@@ -1,4 +1,4 @@
-module ccm
+module github.com/varogonz95/clawsh
 
 go 1.22
 

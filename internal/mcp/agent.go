@@ -14,9 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"ccm/internal/agent"
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 // Options configure the stub. Listen, Claude and TokenFile are passed to a
@@ -174,7 +174,7 @@ func spawn(o Options) error {
 // its env on to every claude it launches, which must not look nested inside
 // (or be confused with) the spawning session.
 var sessionEnv = map[string]bool{
-	"CLAUDECODE": true, "CLAUDE_PID": true, "CLAUDE_PROJECT_DIR": true, "CCM_SESSION_ID": true,
+	"CLAUDECODE": true, "CLAUDE_PID": true, "CLAUDE_PROJECT_DIR": true, "CLAWSH_SESSION_ID": true,
 	"CLAUDE_CODE_ENTRYPOINT": true, "CLAUDE_CODE_SSE_PORT": true, "CLAUDE_CODE_SESSION_ID": true,
 	"CLAUDE_CODE_CHILD_SESSION": true, "CLAUDE_CODE_EXECPATH": true,
 }

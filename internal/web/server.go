@@ -1,4 +1,4 @@
-// Package web serves the browser UI for the hub: `ccm web`.
+// Package web serves the browser UI for the hub: `clawsh web`.
 //
 // The server listens on loopback only, holds every agent token from
 // hosts.toml, and is the only thing the browser talks to. Design:
@@ -15,7 +15,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 //go:embed static

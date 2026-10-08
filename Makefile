@@ -1,20 +1,22 @@
-BIN := ccm
-PKG := ./cmd/ccm
+BIN := clawsh
+PKG := ./cmd/clawsh
 PLATFORMS := windows/amd64 windows/arm64 linux/amd64 linux/arm64 darwin/amd64 darwin/arm64
 # Version without the leading "v". Only v* tags count: on v0.1.0 -> 0.1.0, after
 # it -> 0.1.0-3-gabc1234; before any v* tag -> dev+<commit>; no git -> dev.
 # A ".dirty"/"-dirty" suffix marks uncommitted changes. An empty VERSION= means dev.
 VERSION ?= $(or $(patsubst v%,%,$(shell git describe --tags --match 'v[0-9]*' --dirty 2>/dev/null)),$(addprefix dev+,$(shell git describe --always --abbrev=12 --dirty=.dirty --exclude='*' 2>/dev/null)),dev)
 override VERSION := $(or $(strip $(VERSION)),dev)
-LDFLAGS := -X ccm/internal/api.Version=$(VERSION)
+LDFLAGS := -X github.com/varogonz95/clawsh/internal/api.Version=$(VERSION)
 
 .PHONY: build test vet dist docker-dist clean
 
 build:
 	go build -ldflags="$(LDFLAGS)" -o $(BIN) $(PKG)
 
+# A hung test fails after 3m with every goroutine's stack (the suite takes
+# well under a minute) instead of running into go test's silent 11m kill.
 test:
-	go test -race ./...
+	go test -race -timeout 3m ./...
 
 vet:
 	go vet ./...

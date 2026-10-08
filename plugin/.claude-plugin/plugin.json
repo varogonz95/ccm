@@ -1,8 +1,8 @@
 {
-  "name": "ccm",
+  "name": "clawsh",
   "version": "0.1.0",
-  "description": "Keeps a local ccm agent running and lists every Claude Code session in `ccm ls`. Requires the ccm binary on PATH.",
+  "description": "Keeps a local clawsh agent running and lists every Claude Code session in `clawsh ls`. Requires the clawsh binary on PATH.",
   "author": { "name": "varogonz95" },
-  "homepage": "https://varogonz95.github.io/ccm/",
-  "repository": "https://github.com/varogonz95/ccm"
+  "homepage": "https://varogonz95.github.io/clawsh/",
+  "repository": "https://github.com/varogonz95/clawsh"
 }

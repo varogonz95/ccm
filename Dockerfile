@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Cross-compiles ccm for every platform in the Makefile's PLATFORMS list.
+# Cross-compiles clawsh for every platform in the Makefile's PLATFORMS list.
 # Go cross-compiles natively (CGO_ENABLED=0), so the builder always runs on
 # the host's platform; no emulation needed.
 #

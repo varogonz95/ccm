@@ -1,5 +1,5 @@
-# Copy to your hub config path (run `ccm help` to see it) as hosts.toml.
-# Get each token by running `ccm token` on that machine.
+# Copy to your hub config path (run `clawsh help` to see it) as hosts.toml.
+# Get each token by running `clawsh token` on that machine.
 
 [[host]]
 name = "desk"

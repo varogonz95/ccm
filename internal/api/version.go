@@ -2,7 +2,7 @@ package api
 
 import "runtime/debug"
 
-// Version is set at build time: -ldflags "-X ccm/internal/api.Version=1.2.3"
+// Version is set at build time: -ldflags "-X github.com/varogonz95/clawsh/internal/api.Version=1.2.3"
 // (the Makefile derives it from the latest v* git tag). A plain `go build`
 // leaves it at "dev", which init extends with the commit Go records in the
 // binary, so differently built agents can still be told apart.

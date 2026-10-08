@@ -3,7 +3,7 @@
 ## Commands
 
 ```sh
-make build        # ./ccm
+make build        # ./clawsh
 make test         # go test -race ./...
 make vet          # go vet for linux, windows and darwin
 make dist         # cross-compile into dist/
@@ -18,11 +18,11 @@ go test -race -run TestReplayOnLateAttach ./internal/agent
 
 The end-to-end tests (`internal/agent/e2e_test.go`) start a real agent over HTTP/WebSocket with `/bin/sh` standing in for claude. They're skipped on Windows, which needs a manual check (see `docs/PLAN.md`).
 
-For a manual loop, run `./ccm agent --claude /bin/sh` and point a `hosts.toml` at `http://localhost:7420`.
+For a manual loop, run `./clawsh agent --claude /bin/sh` and point a `hosts.toml` at `http://localhost:7420`.
 
 ## Releases
 
-`ccm version` prints the version baked in at build time. The Makefile takes it from the latest `v*` tag (`v0.1.0` → `0.1.0`, later commits `0.1.0-3-gabc1234`); before the first tag it's `dev+<commit>`. Override with `make dist VERSION=1.2.3`. A plain `go build` from a checkout reports `dev+<commit>` too (Go records the commit in the binary), and `dev` when there's no git information. `ccm hosts` shows release versions with a `v` prefix and dev builds as they are.
+`clawsh version` prints the version baked in at build time. The Makefile takes it from the latest `v*` tag (`v0.1.0` → `0.1.0`, later commits `0.1.0-3-gabc1234`); before the first tag it's `dev+<commit>`. Override with `make dist VERSION=1.2.3`. A plain `go build` from a checkout reports `dev+<commit>` too (Go records the commit in the binary), and `dev` when there's no git information. `clawsh hosts` shows release versions with a `v` prefix and dev builds as they are.
 
 To publish, bump `plugin/.claude-plugin/plugin.json` to the new version (the release fails if it doesn't match the tag), then push a tag:
 
@@ -36,7 +36,7 @@ git tag v0.1.0 && git push origin v0.1.0
 
 | Path | |
 |---|---|
-| `cmd/ccm` | CLI entrypoint, every subcommand |
+| `cmd/clawsh` | CLI entrypoint, every subcommand |
 | `internal/api` | Wire types shared by agent and hub |
 | `internal/ptyx` | PTY abstraction: creack/pty on Unix, ConPTY on Windows |
 | `internal/agent` | Session manager, HTTP/WebSocket server, token, scrollback |

@@ -76,8 +76,8 @@ func TestRedirectURLWindowsPath(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("drive-letter paths only resolve on Windows")
 	}
-	r := &Redirect{Path: `C:\Users\Me Too\AppData\Local\Temp\ccm-web-1\open.html`}
-	want := "file:///C:/Users/Me%20Too/AppData/Local/Temp/ccm-web-1/open.html"
+	r := &Redirect{Path: `C:\Users\Me Too\AppData\Local\Temp\clawsh-web-1\open.html`}
+	want := "file:///C:/Users/Me%20Too/AppData/Local/Temp/clawsh-web-1/open.html"
 	if got := r.URL(); got != want {
 		t.Errorf("URL = %q, want %q", got, want)
 	}

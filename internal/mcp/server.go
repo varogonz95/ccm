@@ -1,10 +1,10 @@
-// Package mcp is the `ccm mcp` stub: a minimal MCP stdio server that a
+// Package mcp is the `clawsh mcp` stub: a minimal MCP stdio server that a
 // Claude Code plugin registers so it runs for the lifetime of every Claude
 // Code session. It exposes no tools; it exists for its side effects:
 //
-//   - make sure a local `ccm agent` is running, spawning a detached one if not;
-//   - announce the session to that agent (a renewed lease) so `ccm ls` sees
-//     claude sessions started outside ccm, and withdraw it on exit.
+//   - make sure a local `clawsh agent` is running, spawning a detached one if not;
+//   - announce the session to that agent (a renewed lease) so `clawsh ls` sees
+//     claude sessions started outside clawsh, and withdraw it on exit.
 //
 // Claude Code closes stdin when the session ends, which ends Serve.
 package mcp
@@ -15,7 +15,7 @@ import (
 	"io"
 	"sync"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 // MCP JSON-RPC 2.0 over newline-delimited stdio.
@@ -80,8 +80,8 @@ func handle(req message) (any, *rpcError) {
 		return map[string]any{
 			"protocolVersion": v,
 			"capabilities":    map[string]any{},
-			"serverInfo":      map[string]any{"name": "ccm", "version": api.Version},
-			"instructions":    "ccm bookkeeping only: keeps a local ccm agent running and lists this session in `ccm ls`. No tools.",
+			"serverInfo":      map[string]any{"name": "clawsh", "version": api.Version},
+			"instructions":    "clawsh bookkeeping only: keeps a local clawsh agent running and lists this session in `clawsh ls`. No tools.",
 		}, nil
 	case "ping":
 		return map[string]any{}, nil

@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 const (
@@ -105,7 +105,7 @@ func (b *broadcaster) publish(ctx context.Context) {
 	ov := api.Overview{ConfigPath: b.hosts.path, ConfigError: cfgErr, Hosts: hub.Overview(ctx, hosts)}
 	data, err := json.Marshal(ov)
 	if err != nil {
-		log.Printf("ccm web: encode overview: %v", err)
+		log.Printf("clawsh web: encode overview: %v", err)
 		return
 	}
 	b.mu.Lock()

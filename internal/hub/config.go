@@ -2,17 +2,18 @@ package hub
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/varogonz95/clawsh/internal/paths"
 )
 
 type Host struct {
 	Name  string `toml:"name"`
 	URL   string `toml:"url"`   // e.g. http://192.168.1.20:7420
-	Token string `toml:"token"` // from `ccm token` on that machine
+	Token string `toml:"token"` // from `clawsh token` on that machine
 }
 
 type Config struct {
@@ -20,11 +21,7 @@ type Config struct {
 }
 
 func DefaultConfigPath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	return filepath.Join(dir, "ccm", "hosts.toml")
+	return filepath.Join(paths.ConfigDir(), "hosts.toml")
 }
 
 func LoadConfig(path string) (*Config, error) {

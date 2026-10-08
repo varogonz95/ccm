@@ -40,20 +40,20 @@ jobs:
         run: make dist VERSION="${GITHUB_REF_NAME#v}"
 
       # One archive per platform, each unpacking into its own directory:
-      # ccm_<version>_<os>_<arch>/{ccm[.exe],README.md}
+      # clawsh_<version>_<os>_<arch>/{clawsh[.exe],README.md}
       - name: Package
         run: |
           version="${GITHUB_REF_NAME#v}"
           work=$(mktemp -d)
           trap 'rm -rf "$work"' EXIT
           mkdir -p out
-          for f in dist/ccm-*; do
-            target=$(basename "$f" .exe)       # ccm-linux-amd64
-            target=${target#ccm-}              # linux-amd64
-            name="ccm_${version}_${target//-/_}"
+          for f in dist/clawsh-*; do
+            target=$(basename "$f" .exe)       # clawsh-linux-amd64
+            target=${target#clawsh-}              # linux-amd64
+            name="clawsh_${version}_${target//-/_}"
             ext=; [[ $f == *.exe ]] && ext=.exe
             mkdir "$work/$name"
-            install -m 755 "$f" "$work/$name/ccm$ext"
+            install -m 755 "$f" "$work/$name/clawsh$ext"
             cp README.md "$work/$name/"
             if [[ $ext == .exe ]]; then
               (cd "$work" && zip -qr "$OLDPWD/out/$name.zip" "$name")
@@ -71,4 +71,4 @@ jobs:
           flags=()
           [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
           gh release create "$GITHUB_REF_NAME" out/* \
-            --verify-tag --generate-notes --title "ccm ${GITHUB_REF_NAME}" "${flags[@]}"
+            --verify-tag --generate-notes --title "clawsh ${GITHUB_REF_NAME}" "${flags[@]}"

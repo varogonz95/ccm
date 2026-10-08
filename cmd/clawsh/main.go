@@ -1,14 +1,14 @@
-// ccm — manage Claude Code sessions across machines.
+// clawsh — manage Claude Code sessions across machines.
 //
-//	ccm agent                     run on every machine that hosts sessions
-//	ccm token                     print this machine's agent token
-//	ccm mcp                       MCP stub for the Claude Code plugin (see plugin/)
-//	ccm hosts                     check which configured agents are reachable
-//	ccm ls [host]                 list sessions on all (or one) hosts
-//	ccm new <host> [flags] [-- claude args...]
-//	ccm attach <host>/<id>        attach; Ctrl-] detaches
-//	ccm kill <host>/<id>
-//	ccm web                       browser UI for every host and session
+//	clawsh agent                     run on every machine that hosts sessions
+//	clawsh token                     print this machine's agent token
+//	clawsh mcp                       MCP stub for the Claude Code plugin (see plugin/)
+//	clawsh hosts                     check which configured agents are reachable
+//	clawsh ls [host]                 list sessions on all (or one) hosts
+//	clawsh new <host> [flags] [-- claude args...]
+//	clawsh attach <host>/<id>        attach; Ctrl-] detaches
+//	clawsh kill <host>/<id>
+//	clawsh web                       browser UI for every host and session
 package main
 
 import (
@@ -30,11 +30,11 @@ import (
 
 	"golang.org/x/term"
 
-	"ccm/internal/agent"
-	"ccm/internal/api"
-	"ccm/internal/hub"
-	"ccm/internal/mcp"
-	"ccm/internal/web"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
+	"github.com/varogonz95/clawsh/internal/mcp"
+	"github.com/varogonz95/clawsh/internal/web"
 )
 
 func main() {
@@ -64,7 +64,7 @@ func main() {
 	case "web":
 		err = runWeb(args)
 	case "version":
-		fmt.Println("ccm", api.Version)
+		fmt.Println("clawsh", api.Version)
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -73,13 +73,13 @@ func main() {
 		os.Exit(2)
 	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "ccm:", err)
+		fmt.Fprintln(os.Stderr, "clawsh:", err)
 		os.Exit(1)
 	}
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `usage: ccm <command> [args]
+	fmt.Fprint(os.Stderr, `usage: clawsh <command> [args]
 
 agent side (run on each machine):
   agent [--listen :7420] [--claude claude] [--token-file path]
@@ -138,7 +138,7 @@ func runAgent(args []string) error {
 		_ = srv.Shutdown(sctx)
 	}()
 
-	log.Printf("ccm agent %s listening on %s (claude: %s)", api.Version, *listen, *claude)
+	log.Printf("clawsh agent %s listening on %s (claude: %s)", api.Version, *listen, *claude)
 	if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
@@ -170,14 +170,14 @@ func runMCP(args []string) error {
 	noAnnounce := fs.Bool("no-announce", false, "don't list this session on the agent")
 	_ = fs.Parse(args)
 	log.SetOutput(os.Stderr)
-	log.SetPrefix("ccm mcp: ")
+	log.SetPrefix("clawsh mcp: ")
 
 	dir := os.Getenv("CLAUDE_PROJECT_DIR")
 	if dir == "" {
 		dir, _ = os.Getwd()
 	}
-	// A claude launched by ccm already belongs to the agent that launched it.
-	managed := os.Getenv("CCM_SESSION_ID") != ""
+	// A claude launched by clawsh already belongs to the agent that launched it.
+	managed := os.Getenv("CLAWSH_SESSION_ID") != ""
 
 	// Claude Code stops MCP servers with SIGINT rather than closing stdin.
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -345,7 +345,7 @@ func runNew(args []string) error {
 	detached := fs.Bool("detached", false, "don't attach after creating")
 	pos, claudeArgs := parseInterspersed(fs, args)
 	if len(pos) != 1 {
-		return errors.New("usage: ccm new <host> [--dir d] [--name n] [--detached] [-- claude args...]")
+		return errors.New("usage: clawsh new <host> [--dir d] [--name n] [--detached] [-- claude args...]")
 	}
 	cfg, err := hub.LoadConfig(*cfgPath)
 	if err != nil {
@@ -375,7 +375,7 @@ func runAttach(args []string) error {
 	fs, cfgPath := hubFlags("attach")
 	pos, _ := parseInterspersed(fs, args)
 	if len(pos) != 1 {
-		return errors.New("usage: ccm attach <host>/<id>")
+		return errors.New("usage: clawsh attach <host>/<id>")
 	}
 	hostName, id, err := splitTarget(pos[0])
 	if err != nil {
@@ -396,7 +396,7 @@ func runKill(args []string) error {
 	fs, cfgPath := hubFlags("kill")
 	pos, _ := parseInterspersed(fs, args)
 	if len(pos) != 1 {
-		return errors.New("usage: ccm kill <host>/<id>")
+		return errors.New("usage: clawsh kill <host>/<id>")
 	}
 	hostName, id, err := splitTarget(pos[0])
 	if err != nil {
@@ -455,17 +455,17 @@ func runWeb(args []string) error {
 	}()
 
 	u := fmt.Sprintf("http://%s/?k=%s", ln.Addr(), secret)
-	fmt.Printf("ccm web: open %s\n(Ctrl-C to stop)\n", u)
+	fmt.Printf("clawsh web: open %s\n(Ctrl-C to stop)\n", u)
 	if !*noOpen {
 		// The browser gets a private file that redirects to u, never u itself:
 		// a command line is visible to every local user.
 		if rd, err := web.WriteRedirect(u); err != nil {
-			fmt.Fprintf(os.Stderr, "ccm web: couldn't prepare the browser launch (%v); open the link above\n", err)
+			fmt.Fprintf(os.Stderr, "clawsh web: couldn't prepare the browser launch (%v); open the link above\n", err)
 		} else {
 			defer rd.Remove()
 			time.AfterFunc(30*time.Second, func() { _ = rd.Remove() })
 			if err := web.OpenBrowser(rd.URL()); err != nil {
-				fmt.Fprintf(os.Stderr, "ccm web: couldn't open a browser (%v); open the link above\n", err)
+				fmt.Fprintf(os.Stderr, "clawsh web: couldn't open a browser (%v); open the link above\n", err)
 			}
 		}
 	}

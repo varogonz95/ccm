@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"ccm/internal/agent"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 func TestServeHandshake(t *testing.T) {
@@ -102,7 +102,7 @@ func TestRunAnnouncesAndWithdraws(t *testing.T) {
 
 func TestAgentEnv(t *testing.T) {
 	in := []string{"PATH=/bin", "CLAUDECODE=1", "CLAUDE_CODE_ENTRYPOINT=cli", "CLAUDE_PLUGIN_ROOT=/p",
-		"CLAUDE_CODE_USE_BEDROCK=1", "ANTHROPIC_API_KEY=k", "CCM_SESSION_ID=x"}
+		"CLAUDE_CODE_USE_BEDROCK=1", "ANTHROPIC_API_KEY=k", "CLAWSH_SESSION_ID=x"}
 	got := strings.Join(agentEnv(in), " ")
 	if got != "PATH=/bin CLAUDE_CODE_USE_BEDROCK=1 ANTHROPIC_API_KEY=k" {
 		t.Fatalf("agentEnv = %q", got)

@@ -8,15 +8,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/varogonz95/clawsh/internal/paths"
 )
 
 // DefaultTokenPath is where the agent keeps its bearer token.
 func DefaultTokenPath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	return filepath.Join(dir, "ccm", "agent.token")
+	return filepath.Join(paths.ConfigDir(), "agent.token")
 }
 
 // LoadOrCreateToken reads the token at path, generating one on first run.

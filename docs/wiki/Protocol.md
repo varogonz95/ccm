@@ -54,7 +54,7 @@ All fields are optional. `dir` defaults to the agent user's home and `~` is expa
 
 ### External sessions
 
-Claude sessions the agent doesn't own, announced by `ccm mcp` (see [Claude Code plugin](Plugin.md)). They're listed only; you can't attach to them or kill them.
+Claude sessions the agent doesn't own, announced by `clawsh mcp` (see [Claude Code plugin](Plugin.md)). They're listed only; you can't attach to them or kill them.
 
 `PUT /v1/external/{id}` takes `{"name","dir","pid"}`, all optional; `name` defaults to the basename of `dir`. The caller picks the `{id}`: 1–64 characters of `[0-9a-zA-Z_-]`. The call is an upsert, and each one renews a lease. The agent forgets entries not renewed within 90 s.
 

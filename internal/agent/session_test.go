@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"ccm/internal/api"
+	"github.com/varogonz95/clawsh/internal/api"
 )
 
 func TestResizeAfterExitIsNoop(t *testing.T) {

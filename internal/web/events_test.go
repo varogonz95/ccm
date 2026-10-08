@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 func TestOverviewOnlineAndOffline(t *testing.T) {

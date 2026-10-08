@@ -4,8 +4,8 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/api"
-	"ccm/internal/ptyx"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/ptyx"
 )
 
 // Session is one claude process running inside a PTY owned by the agent.

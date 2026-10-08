@@ -1,12 +1,12 @@
-// ccm web UI: a dashboard of machines and sessions, plus a full-page terminal.
-// Plain JS, no build step. It only talks to the ccm web server that served it.
+// clawsh web UI: a dashboard of machines and sessions, plus a full-page terminal.
+// Plain JS, no build step. It only talks to the clawsh web server that served it.
 'use strict';
 
 const HOST_COLORS = ['#6a9cf2', '#f0b43c', '#52c27f', '#e8875a', '#b48cf0', '#4fc1c9'];
 const AUTH_ERROR = 'access key rejected'; // hub.ErrMsgAuth
 const CLOSE_NOT_FOUND = 4404; // web.closeNotFound
 const CLOSE_UNREACHABLE = 4502; // web.closeUnreachable
-const KEY_STORE = 'ccm_key';
+const KEY_STORE = 'clawsh_key';
 
 // takeKey moves the access key from the opened link (?k=…) into
 // localStorage and out of the address bar. localStorage is scoped to this
@@ -158,7 +158,7 @@ function connectEvents() {
   });
   es.onerror = () => {
     // EventSource retries by itself unless the server refused us (CLOSED).
-    // That happens when ccm web was restarted and our key is stale.
+    // That happens when clawsh web was restarted and our key is stale.
     state.live = es.readyState === EventSource.CLOSED ? 'signed-out' : 'reconnecting';
     render();
   };
@@ -209,7 +209,7 @@ function liveBadge() {
 function topbar() {
   const canCreate = state.overview && state.overview.hosts.some((x) => x.online);
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-in' },
-    h('a', { class: 'brand', href: '#/', 'data-key': 'brand' }, h('span', { class: 'wordmark' }, 'ccm'), h('span', { class: 'mono small muted' }, 'hub')),
+    h('a', { class: 'brand', href: '#/', 'data-key': 'brand' }, h('span', { class: 'wordmark' }, 'clawsh'), h('span', { class: 'mono small muted' }, 'hub')),
     h('div', { class: 'grow' }),
     liveBadge(),
     canCreate ? h('a', { class: 'btn primary', href: '#/new', 'data-key': 'new' }, icon('plus'), 'New session') : null));
@@ -299,7 +299,7 @@ function offlineCard(host) {
     : [
       h('p', {}, "Can't reach this machine."),
       h('p', { class: 'mono small muted' }, host.error),
-      h('p', { class: 'small muted' }, "Check that it's on and running ", h('code', {}, 'ccm agent'),
+      h('p', { class: 'small muted' }, "Check that it's on and running ", h('code', {}, 'clawsh agent'),
         '. This card updates on its own when it comes back.'),
     ];
   return h('section', { class: 'card offline' },
@@ -315,10 +315,10 @@ function firstRun(ov) {
   return h('div', { class: 'first-run' },
     configError(ov),
     h('h1', {}, 'No machines yet'),
-    h('p', { class: 'muted' }, 'ccm shows the machines listed in your hosts file. Add one in three steps:'),
+    h('p', { class: 'muted' }, 'clawsh shows the machines listed in your hosts file. Add one in three steps:'),
     h('ol', { class: 'steps' },
-      step(1, 'On that machine, run ', h('code', {}, 'ccm agent')),
-      step(2, 'Copy its access key with ', h('code', {}, 'ccm token')),
+      step(1, 'On that machine, run ', h('code', {}, 'clawsh agent')),
+      step(2, 'Copy its access key with ', h('code', {}, 'clawsh token')),
       step(3, 'Add it to ', h('code', {}, ov.config_path), ' on this computer:',
         h('pre', { class: 'snippet' }, '[[host]]\nname  = "desk"\nurl   = "http://192.168.1.20:7420"\ntoken = "paste the access key here"'))),
     h('p', { class: 'small muted' }, 'This page updates by itself when you save the file. Adding machines from this page is coming later.'));
@@ -328,8 +328,8 @@ function renderSignedOut() {
   closeSession();
   if (newDialog) newDialog.close();
   app.replaceChildren(h('main', { class: 'page' }, h('div', { class: 'first-run' },
-    h('h1', {}, KEY ? 'ccm web was restarted' : 'Open ccm from your terminal'),
-    h('p', { class: 'muted' }, 'Open the link printed by ccm web in your terminal.'))));
+    h('h1', {}, KEY ? 'clawsh web was restarted' : 'Open clawsh from your terminal'),
+    h('p', { class: 'muted' }, 'Open the link printed by clawsh web in your terminal.'))));
 }
 
 // ---------- new session ----------

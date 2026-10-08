@@ -12,9 +12,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"ccm/internal/agent"
-	"ccm/internal/api"
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/agent"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 // End-to-end over real HTTP/WebSocket, with /bin/sh standing in for claude.

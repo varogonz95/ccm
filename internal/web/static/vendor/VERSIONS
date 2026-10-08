@@ -1,4 +1,4 @@
-Vendored for the ccm web UI. Update by re-running the curl commands in
+Vendored for the clawsh web UI. Update by re-running the curl commands in
 docs/superpowers/plans/2026-10-01-web-ui.md (Task 7, Step 1) with new versions.
 
 xterm.js, xterm.css   @xterm/xterm 5.5.0        MIT   https://github.com/xtermjs/xterm.js

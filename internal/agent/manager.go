@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/api"
-	"ccm/internal/ptyx"
+	"github.com/varogonz95/clawsh/internal/api"
+	"github.com/varogonz95/clawsh/internal/ptyx"
 )
 
 var (
@@ -64,7 +64,7 @@ func (m *Manager) Create(req api.CreateRequest) (*Session, error) {
 	}
 
 	id := newID()
-	env := append(os.Environ(), "CCM_SESSION_ID="+id)
+	env := append(os.Environ(), "CLAWSH_SESSION_ID="+id)
 	if runtime.GOOS != "windows" {
 		env = append(env, "TERM=xterm-256color", "COLORTERM=truecolor")
 	}

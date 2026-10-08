@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"ccm/internal/hub"
+	"github.com/varogonz95/clawsh/internal/hub"
 )
 
 // hostsFile is hosts.toml, re-read whenever its modification time or size
@@ -45,7 +45,7 @@ func (f *hostsFile) State() ([]hub.Host, string) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if err := f.reloadLocked(); err != nil {
-		log.Printf("ccm web: keeping previous hosts: %v", err)
+		log.Printf("clawsh web: keeping previous hosts: %v", err)
 	}
 	if f.err != nil {
 		return f.hosts, f.err.Error()
