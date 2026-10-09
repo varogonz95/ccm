@@ -2,6 +2,7 @@
   "name": "clawsh",
   "version": "0.0.0",
   "description": "All your Claudes, one shell: start, list and attach to Claude Code sessions on every machine in your LAN.",
+  "license": "SEE LICENSE IN LICENSE",
   "homepage": "https://varogonz95.github.io/clawsh/",
   "repository": {
     "type": "git",

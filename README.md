@@ -58,3 +58,7 @@ Anyone holding an agent's token can run Claude Code on that machine, with that m
 - Sessions stop when the agent stops. `claude --resume` recovers the conversation.
 - Status is `running` / `exited`. Working / idle / needs-input arrives with M3.
 - Windows: killing a session doesn't yet kill claude's child processes (Job Object TODO).
+
+## License
+
+clawsh is source-available under the [Apache License 2.0 with the Commons Clause](LICENSE). You can use it for free, including at work, and copy, modify and share it, but you can't sell it or charge for a product or service (hosting, support, consulting) whose value comes mostly from clawsh.
