@@ -1,9 +1,13 @@
 name: ci
 
+# Docs-only changes skip CI. Releases call this via workflow_call, which
+# ignores these filters, so a tag always runs the full checks.
 on:
   push:
     branches: [main]
+    paths-ignore: ["**.md", "docs/**", "site/**"]
   pull_request:
+    paths-ignore: ["**.md", "docs/**", "site/**"]
   workflow_call:
 
 permissions:
