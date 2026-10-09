@@ -48,7 +48,7 @@ jobs:
           if-no-files-found: error
 
       # One archive per platform, each unpacking into its own directory:
-      # clawsh_<version>_<os>_<arch>/{clawsh[.exe],README.md}
+      # clawsh_<version>_<os>_<arch>/{clawsh[.exe],README.md,LICENSE}
       - name: Package
         run: |
           version="${GITHUB_REF_NAME#v}"
@@ -62,7 +62,7 @@ jobs:
             ext=; [[ $f == *.exe ]] && ext=.exe
             mkdir "$work/$name"
             install -m 755 "$f" "$work/$name/clawsh$ext"
-            cp README.md "$work/$name/"
+            cp README.md LICENSE "$work/$name/"
             if [[ $ext == .exe ]]; then
               (cd "$work" && zip -qr "$OLDPWD/out/$name.zip" "$name")
             else
