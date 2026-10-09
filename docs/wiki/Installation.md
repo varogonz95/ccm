@@ -13,7 +13,7 @@ npx clawsh ls        # or run it without installing
 
 The `clawsh` package is a small launcher. npm also installs the one platform package that matches your machine (`clawsh-linux-x64`, `clawsh-darwin-arm64`, `clawsh-win32-x64`, ...), which holds the real binary. If that package was skipped (pnpm or bun blocking it, `--omit=optional`, a lockfile made on another OS), the first run downloads it from your npm registry, checks it against the registry's sha512, and caches it.
 
-Behind a proxy or a registry that blocks the download, point the launcher at a binary you already have: `CLAWSH_BINARY_PATH=/path/to/clawsh`. On Node 24+, `NODE_USE_ENV_PROXY=1` makes the download honor `HTTPS_PROXY`.
+Behind a proxy or a registry that blocks the download, point the launcher at a binary you already have: `CLAWSH_BINARY_PATH=/path/to/clawsh`. On Node 24+, `NODE_USE_ENV_PROXY=1` makes the download honor `HTTPS_PROXY`. Downloaded binaries are cached in `~/.cache/clawsh` (`$XDG_CACHE_HOME/clawsh`), `~/Library/Caches/clawsh` on macOS or `%LOCALAPPDATA%\clawsh\cache` on Windows; set `CLAWSH_CACHE_DIR` to use another directory.
 
 ## Prebuilt binaries
 

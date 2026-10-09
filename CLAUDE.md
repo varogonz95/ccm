@@ -18,7 +18,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `internal/mcp` — `clawsh mcp`: tool-less MCP stdio stub run by the Claude Code plugin; spawns a detached agent and announces the session (`/v1/external` lease). PoC, see `docs/poc-auto-agent.md`.
 - `npm/` — npm distribution: `clawsh/` is the launcher package (`bin/clawsh.js` runs the matching `clawsh-<os>-<cpu>` package's binary, or downloads it from the registry with a sha512 check); `build.mjs` stages all packages from `dist/` at release time; tests in `npm/test/` (`node --test npm/test/*.test.mjs`).
 - `plugin/` — the Claude Code plugin (`.mcp.json` runs `clawsh mcp`); `.claude-plugin/marketplace.json` at the root makes the repo a marketplace.
-- `docs/wiki` — user docs (GitHub-wiki style pages, `Home.md` is the index). Update them when flags, commands or the protocol change.
+- `docs/wiki` — user docs (GitHub-wiki style pages, `Home.md` is the index), mirrored to the GitHub wiki by `.github/workflows/wiki.yml` on push to `main`; never edit the wiki directly. Update them when flags, commands or the protocol change.
 - `site/index.html` — static landing page, deployed to GitHub Pages by `.github/workflows/pages.yml`.
 
 ## Commands

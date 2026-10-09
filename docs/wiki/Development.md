@@ -4,7 +4,7 @@
 
 ```sh
 make build        # ./clawsh
-make test         # go test -race ./...
+make test         # go test -race -timeout 3m ./...
 make vet          # go vet for linux, windows and darwin
 make dist         # cross-compile into dist/
 make docker-dist  # same, inside Docker
@@ -60,6 +60,10 @@ fix/12/conpty-handle-after-close
 chore/release-workflow
 ```
 
+## Docs
+
+The wiki pages live in `docs/wiki/`; edit them there, not in the GitHub wiki. On every push to `main` that touches `docs/wiki/`, `.github/workflows/wiki.yml` mirrors the folder into the wiki, dropping `.md` from page links and pointing links outside the folder at the repo. The wiki has to exist before the first sync: create any page once in the GitHub UI.
+
 ## Layout
 
 | Path | |
@@ -69,6 +73,11 @@ chore/release-workflow
 | `internal/ptyx` | PTY abstraction: creack/pty on Unix, ConPTY on Windows |
 | `internal/agent` | Session manager, HTTP/WebSocket server, token, scrollback |
 | `internal/hub` | `hosts.toml`, agent client, terminal attach |
+| `internal/web` | `clawsh web`: loopback server, SSE overview, attach bridge, embedded UI in `static/` |
+| `internal/mcp` | `clawsh mcp`: MCP stdio stub run by the plugin; spawns an agent, announces the session |
+| `internal/paths` | Per-user config dir (`<config>/clawsh`, falling back to `<config>/ccm`) |
+| `npm/` | npm launcher package, `build.mjs` to stage release packages, launcher tests |
+| `plugin/` | The Claude Code plugin (`.mcp.json` runs `clawsh mcp`) |
 
 ## Rules
 
