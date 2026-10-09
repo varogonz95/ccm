@@ -31,6 +31,12 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - Version: `api.Version` is set via `-ldflags -X` from `git describe` (override `VERSION=`). Releases: push a `v*` tag; `.github/workflows/release.yml` runs CI, `make dist`, and publishes archives + `checksums.txt`.
 - Local manual run: `./clawsh agent --claude /bin/sh` (any command works as the session program), then point a `hosts.toml` (path from `clawsh help`; example in `hosts.example.toml`) at `http://localhost:7420` with the token from `./clawsh token`.
 
+## Branches
+
+- Name every branch `<type>/<ticket>/<title>`: type is `feat`, `fix`, `chore` or `doc`; ticket is the GitHub issue number; title is a short kebab-case summary. Example: `fix/12/conpty-handle-after-close`. No issue: drop the ticket segment (`chore/release-workflow`).
+- Start from the latest `main`; stash a dirty tree first (`git stash -u`).
+- This overrides auto-generated session branch names (e.g. `claude/<random-words>`): never push work to those.
+
 ## Architecture
 
 - **Session lifecycle** (`agent/session.go`): each `Session` runs two goroutines. `readLoop` reads PTY output, appends to a bounded `Scrollback`, and fans out to subscriber channels (non-blocking send; a full channel means the viewer is dropped). `waitLoop` records the exit code, waits briefly for the reader to drain, then closes the PTY (on Windows, ConPTY reads only unblock on close) and closes `done`.

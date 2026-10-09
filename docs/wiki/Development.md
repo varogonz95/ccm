@@ -32,6 +32,20 @@ git tag v0.1.0 && git push origin v0.1.0
 
 `.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests.
 
+## Branches
+
+`<type>/<ticket>/<title>`, cut from the latest `main`:
+
+- `type`: `feat`, `fix`, `chore` or `doc`
+- `ticket`: GitHub issue number; leave the segment out when there's no issue
+- `title`: short kebab-case summary
+
+```
+feat/6/web-lan-access
+fix/12/conpty-handle-after-close
+chore/release-workflow
+```
+
 ## Layout
 
 | Path | |
