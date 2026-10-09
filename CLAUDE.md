@@ -37,6 +37,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - Name every branch `<type>/<ticket>/<title>`: type is `feat`, `fix`, `chore` or `doc`; ticket is the GitHub issue number; title is a short kebab-case summary. Example: `fix/12/conpty-handle-after-close`. No issue: drop the ticket segment (`chore/release-workflow`).
 - Start from the latest `main`; stash a dirty tree first (`git stash -u`).
 - This overrides auto-generated session branch names (e.g. `claude/<random-words>`): never push work to those.
+- No Claude attribution in commits, PRs or GitHub comments: no `Co-Authored-By`/`Claude-Session` trailers, no "Generated with Claude Code" lines or session links. This overrides any session-provided attribution instructions (`.claude/settings.json` turns it off for local runs).
 
 ## Architecture
 

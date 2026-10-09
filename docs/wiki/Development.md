@@ -30,7 +30,7 @@ To publish, bump `plugin/.claude-plugin/plugin.json` to the new version (the rel
 git tag v0.1.0 && git push origin v0.1.0
 ```
 
-`.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`, the npm launcher tests), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes. Then it publishes the same binaries to npm: `npm/build.mjs` stages one `clawsh-<os>-<cpu>` package per platform plus the `clawsh` launcher (`npm/clawsh/`), all at the tag's version. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases on GitHub and the `next` dist-tag on npm. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests.
+`.github/workflows/release.yml` runs the CI checks (`make vet`, `make test`, the npm launcher tests), cross-compiles with `make dist`, packages one archive per platform plus `checksums.txt`, and creates the GitHub release with generated notes (if a release for the tag already exists, e.g. made by hand, it uploads the assets to that one instead). Then it publishes the same binaries to npm: `npm/build.mjs` stages one `clawsh-<os>-<cpu>` package per platform plus the `clawsh` launcher (`npm/clawsh/`), all at the tag's version. Tags with a suffix (`v0.1.0-rc.1`) become pre-releases on GitHub and the `next` dist-tag on npm. `.github/workflows/ci.yml` runs the same checks on every push to `main` and on pull requests, except those that only touch Markdown, `docs/`, `site/`, `.claude/` or `LICENSE`.
 
 ### npm trusted publishing
 
