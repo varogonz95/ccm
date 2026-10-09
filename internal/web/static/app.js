@@ -2,7 +2,11 @@
 // Plain JS, no build step. It only talks to the clawsh web server that served it.
 'use strict';
 
-const HOST_COLORS = ['#6a9cf2', '#f0b43c', '#52c27f', '#e8875a', '#b48cf0', '#4fc1c9'];
+// Colors and the terminal font come from the stylesheet (app.css :root), so a
+// visual redesign is a CSS change. The fallbacks match the original theme.
+const rootStyle = getComputedStyle(document.documentElement);
+function cssVar(name, fallback) { return rootStyle.getPropertyValue(name).trim() || fallback; }
+const HOST_COLORS = cssVar('--host-colors', '#6a9cf2, #f0b43c, #52c27f, #e8875a, #b48cf0, #4fc1c9').split(',').map((c) => c.trim());
 const AUTH_ERROR = 'access key rejected'; // hub.ErrMsgAuth
 const CLOSE_NOT_FOUND = 4404; // web.closeNotFound
 const CLOSE_UNREACHABLE = 4502; // web.closeUnreachable
@@ -209,7 +213,7 @@ function liveBadge() {
 function topbar() {
   const canCreate = state.overview && state.overview.hosts.some((x) => x.online);
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-in' },
-    h('a', { class: 'brand', href: '#/', 'data-key': 'brand' }, h('span', { class: 'wordmark' }, 'clawsh'), h('span', { class: 'mono small muted' }, 'hub')),
+    h('a', { class: 'brand', href: '#/', 'data-key': 'brand' }, h('span', { class: 'wordmark' }, 'claw', h('span', { class: 'sh' }, 'sh')), h('span', { class: 'mono small muted' }, 'hub')),
     h('div', { class: 'grow' }),
     liveBadge(),
     canCreate ? h('a', { class: 'btn primary', href: '#/new', 'data-key': 'new' }, icon('plus'), 'New session') : null));
@@ -421,10 +425,15 @@ async function submitNew(form, err, submit) {
 
 function openSession(host, id) {
   const term = new Terminal({
-    fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+    fontFamily: cssVar('--term-font', '"JetBrains Mono", ui-monospace, monospace'),
     fontSize: 14,
     cursorBlink: true,
-    theme: { background: '#0a0f14', foreground: '#d9e2ea', cursor: '#d9e2ea', selectionBackground: '#2b4a6e' },
+    theme: {
+      background: cssVar('--term-bg', '#0a0f14'),
+      foreground: cssVar('--term-fg', '#d9e2ea'),
+      cursor: cssVar('--term-fg', '#d9e2ea'),
+      selectionBackground: cssVar('--term-selection', '#2b4a6e'),
+    },
   });
   const fit = new FitAddon.FitAddon();
   term.loadAddon(fit);
