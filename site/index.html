@@ -8,106 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bagel+Fat+One&family=Martian+Mono:wdth,wght@87.5,400;87.5,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
 <style>
-:root {
-  --sea: #dcefe9;
-  --foam: #eef8f4;
-  --ink: #10302c;
-  --ink-soft: #3d5f59;
-  --rule: #a9cbc2;
-  --shell: #d63a26;
-  --shell-ink: #ffffff;
-  --deep: #0c2326;
-  --deep-fg: #d6efe8;
-  --deep-dim: #76a39b;
-  --desk: #2367c9;
-  --laptop: #a66d00;
-  --studio: #8a3fbf;
-  --focus: #2367c9;
-  --display: "Bagel Fat One", "Arial Rounded MT Bold", system-ui, sans-serif;
-  --text: "Atkinson Hyperlegible", system-ui, sans-serif;
-  --mono: "Martian Mono", ui-monospace, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sea: #0b1f1d;
-    --foam: #12302c;
-    --ink: #dff2ec;
-    --ink-soft: #9bbdb5;
-    --rule: #275049;
-    --shell: #ff6a52;
-    --shell-ink: #1a0a07;
-    --deep: #061413;
-    --desk: #79a8f5;
-    --laptop: #f0b84a;
-    --studio: #c79af0;
-    --focus: #79a8f5;
-  }
-}
-
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--sea);
-  color: var(--ink);
-  font: 400 1.0625rem/1.6 var(--text);
-}
-a { color: inherit; text-underline-offset: .18em; }
-a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
-code, pre, kbd { font-family: var(--mono); font-stretch: 87.5%; }
-code { font-size: .86em; }
-kbd {
-  font-size: .8em;
-  padding: .05em .45em;
-  border: 1px solid var(--rule);
-  border-bottom-width: 3px;
-  border-radius: 5px;
-  background: var(--foam);
-}
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-@media (min-width: 720px) { .wrap { padding: 0 32px; } }
-
-/* wordmark: "claw" in the display face, "sh" set like a shell */
-.mark { font-family: var(--display); font-weight: 400; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; }
-.mark .sh { font-family: var(--mono); font-stretch: 87.5%; font-weight: 600; font-size: .78em; color: var(--shell); margin-left: .04em; }
-
-/* header */
-.top { display: flex; justify-content: space-between; align-items: center; padding-block: 22px; }
-.top .mark { font-size: 1.6rem; }
-.top nav { display: flex; gap: 22px; }
-.top nav a { text-decoration: none; color: var(--ink-soft); }
-.top nav a:hover { color: var(--ink); text-decoration: underline; }
-
-/* hero */
-.hero { padding-block: 40px 88px; }
-.hero h1 {
-  font-family: var(--display);
-  font-weight: 400;
-  font-size: clamp(2.9rem, 9vw, 6.4rem);
-  line-height: .95;
-  letter-spacing: -.02em;
-  margin: 0 0 28px;
-  max-width: 12.5ch;
-}
-.lede { font-size: 1.25rem; line-height: 1.5; color: var(--ink-soft); max-width: 44ch; margin: 0 0 32px; }
-.actions { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
-.btn {
-  display: inline-block;
-  padding: 13px 22px;
-  border-radius: 999px;
-  background: var(--shell);
-  color: var(--shell-ink);
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 4px 0 color-mix(in srgb, var(--shell) 55%, var(--ink));
-}
-.btn:hover { transform: translateY(2px); box-shadow: 0 2px 0 color-mix(in srgb, var(--shell) 55%, var(--ink)); }
-.btn:active { transform: translateY(4px); box-shadow: none; }
-.quiet { font-weight: 700; color: var(--ink); }
-
 /* terminal, with the crab living on its top edge */
 .term {
   position: relative;
@@ -173,27 +75,6 @@ kbd {
   .btn:hover, .btn:active { transform: none; }
 }
 
-/* sections are separated by a tide line */
-section { padding: 88px 0; position: relative; }
-section::before {
-  content: "";
-  position: absolute; top: 0; left: 0; right: 0; height: 10px;
-  background: var(--rule);
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='10'%3E%3Cpath d='M0 5 Q10 0 20 5 T40 5' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='10'%3E%3Cpath d='M0 5 Q10 0 20 5 T40 5' fill='none' stroke='black' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
-}
-h2 {
-  font-family: var(--display);
-  font-weight: 400;
-  font-size: clamp(2rem, 4.6vw, 3.1rem);
-  line-height: 1.02;
-  letter-spacing: -.01em;
-  margin: 0 0 18px;
-  max-width: 16ch;
-}
-h3 { font-size: 1.1rem; margin: 0 0 6px; font-weight: 700; }
-p { margin: 0 0 16px; max-width: 62ch; }
-.soft { color: var(--ink-soft); }
 
 /* how it works */
 .split { display: grid; grid-template-columns: minmax(0, 1fr); gap: 48px; }
@@ -244,11 +125,6 @@ p { margin: 0 0 16px; max-width: 62ch; }
 .warn { padding: 22px 24px; background: var(--foam); border-radius: 14px; border: 2px solid var(--shell); }
 .warn p:last-child { margin-bottom: 0; }
 
-footer { padding: 48px 0 64px; color: var(--ink-soft); position: relative; }
-footer::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: var(--rule); }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: baseline; }
-footer .mark { font-size: 1.3rem; color: var(--ink); }
-footer a { color: var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -263,6 +139,7 @@ footer a { color: var(--ink-soft); }
 <header class="wrap top">
   <a class="mark" href="#" aria-label="clawsh home">claw<span class="sh" aria-hidden="true">sh</span></a>
   <nav aria-label="Main">
+    <a href="app.html">Web UI</a>
     <a href="https://github.com/varogonz95/clawsh/blob/main/docs/wiki/Home.md">Docs</a>
     <a href="https://github.com/varogonz95/clawsh">GitHub</a>
   </nav>
