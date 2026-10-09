@@ -18,7 +18,7 @@ Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in h
 
 ## Setup
 
-Prebuilt binaries are on the [Releases](https://github.com/varogonz95/clawsh/releases) page. To build from source you need Go 1.22+.
+With Node 18+: `npm i -g clawsh`, or run it without installing: `npx clawsh ls`. Prebuilt binaries are also on the [Releases](https://github.com/varogonz95/clawsh/releases) page. To build from source you need Go 1.22+.
 
 ```sh
 go mod tidy          # first time only

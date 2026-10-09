@@ -16,6 +16,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `internal/web` — `clawsh web`: loopback server with access-key auth (header or `?k=`), SSE overview, attach bridge, and the embedded UI in `static/` (plain JS, vendored xterm.js and fonts; see `static/vendor/VERSIONS`). The look lives in `app.css`: `app.js` reads host colors and terminal colors/font from its `:root` variables, so a restyle needs no JS.
 - `internal/paths` — per-user config dir (`<config>/clawsh`, falling back to the pre-rename `<config>/ccm`).
 - `internal/mcp` — `clawsh mcp`: tool-less MCP stdio stub run by the Claude Code plugin; spawns a detached agent and announces the session (`/v1/external` lease). PoC, see `docs/poc-auto-agent.md`.
+- `npm/` — npm distribution: `clawsh/` is the launcher package (`bin/clawsh.js` runs the matching `clawsh-<os>-<cpu>` package's binary, or downloads it from the registry with a sha512 check); `build.mjs` stages all packages from `dist/` at release time; tests in `npm/test/` (`node --test npm/test/*.test.mjs`).
 - `plugin/` — the Claude Code plugin (`.mcp.json` runs `clawsh mcp`); `.claude-plugin/marketplace.json` at the root makes the repo a marketplace.
 - `docs/wiki` — user docs (GitHub-wiki style pages, `Home.md` is the index). Update them when flags, commands or the protocol change.
 - `site/index.html` — static landing page, deployed to GitHub Pages by `.github/workflows/pages.yml`.
@@ -28,7 +29,7 @@ Cross-machine manager for Claude Code sessions. Go 1.22, single binary with two 
 - `make vet` — vets for linux, windows, darwin. Run it after any change touching `ptyx`, `hub/console_*`, or syscalls.
 - `make dist` — cross-compile all platforms into `dist/`.
 - `make docker-dist` — same cross-compile inside Docker (`Dockerfile`, buildx), exported to `dist/`; no local Go needed.
-- Version: `api.Version` is set via `-ldflags -X` from `git describe` (override `VERSION=`). Releases: push a `v*` tag; `.github/workflows/release.yml` runs CI, `make dist`, and publishes archives + `checksums.txt`.
+- Version: `api.Version` is set via `-ldflags -X` from `git describe` (override `VERSION=`). Releases: push a `v*` tag; `.github/workflows/release.yml` runs CI, `make dist`, and publishes archives + `checksums.txt`, then the npm packages via trusted publishing (no token).
 - Local manual run: `./clawsh agent --claude /bin/sh` (any command works as the session program), then point a `hosts.toml` (path from `clawsh help`; example in `hosts.example.toml`) at `http://localhost:7420` with the token from `./clawsh token`.
 
 ## Branches

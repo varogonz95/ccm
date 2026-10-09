@@ -1,7 +1,9 @@
 name: release
 
 # Push a tag to publish: git tag v0.1.0 && git push origin v0.1.0
-# Tags with a suffix (v0.1.0-rc.1) become pre-releases.
+# Tags with a suffix (v0.1.0-rc.1) become pre-releases (npm dist-tag "next").
+# npm publishing uses trusted publishing (OIDC): no token secret; each package
+# must list this repo and workflow as a trusted publisher on npmjs.com.
 
 on:
   push:
@@ -39,6 +41,12 @@ jobs:
       - name: Build
         run: make dist VERSION="${GITHUB_REF_NAME#v}"
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
       # One archive per platform, each unpacking into its own directory:
       # clawsh_<version>_<os>_<arch>/{clawsh[.exe],README.md}
       - name: Package
@@ -72,3 +80,40 @@ jobs:
           [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
           gh release create "$GITHUB_REF_NAME" out/* \
             --verify-tag --generate-notes --title "clawsh ${GITHUB_REF_NAME}" "${flags[@]}"
+
+  # The same binaries as the GitHub release, as npm packages: one per platform
+  # (clawsh-<os>-<cpu>) plus the "clawsh" launcher that depends on them.
+  npm:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # trusted publishing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # npm >= 11.5 for trusted publishing
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Stage packages
+        run: node npm/build.mjs "${GITHUB_REF_NAME#v}" dist out/npm
+
+      # Platform packages first, so the launcher never points at a missing one.
+      # Versions already on npm are skipped, so a re-run finishes the job.
+      - name: Publish
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          tag=latest; [[ $version == *-* ]] && tag=next
+          for dir in out/npm/clawsh-*/ out/npm/clawsh/; do
+            name=$(jq -r .name "$dir/package.json")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version is already published, skipping"
+              continue
+            fi
+            npm publish "$dir" --access public --tag "$tag"
+          done
