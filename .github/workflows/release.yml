@@ -72,10 +72,16 @@ jobs:
           (cd out && sha256sum * > checksums.txt)
           ls -l out
 
+      # A release already made for the tag (e.g. by hand in the UI) keeps its
+      # title and notes; the assets are uploaded to it, replacing any of the same name.
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" out/* --clobber
+            exit 0
+          fi
           flags=()
           [[ $GITHUB_REF_NAME == *-* ]] && flags+=(--prerelease)
           gh release create "$GITHUB_REF_NAME" out/* \
