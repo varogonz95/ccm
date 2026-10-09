@@ -43,7 +43,7 @@ Checks every configured agent: health, then an authenticated call. Timeout is 3 
 
 ### `clawsh ls [host]`
 
-Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (`running`, `exited(code)`, or `external` for sessions announced by the [plugin](Plugin.md)), `VIEWERS`, `AGE`, `DIR`. Unreachable hosts are reported on stderr after the table.
+Alias: `list`. Lists sessions on every host, or just one. Columns: `TARGET`, `NAME`, `STATUS` (`running`, `exited(code)`, or `external` for sessions announced by the [plugin](Plugin.md)), `VIEWERS`, `AGE`, `DIR`. Unreachable hosts are reported on stderr after the table.
 
 ### `clawsh new <host> [flags] [-- claude args...]`
 

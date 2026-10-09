@@ -82,9 +82,10 @@ func usage() {
 	fmt.Fprint(os.Stderr, `usage: clawsh <command> [args]
 
 agent side (run on each machine):
-  agent [--listen :7420] [--claude claude] [--token-file path]
+  agent [--listen :7420] [--claude claude] [--token-file path] [--scrollback bytes]
   token [--token-file path]
-  mcp [--listen :7420] [--claude claude] [--no-spawn] [--no-announce]
+  mcp [--listen :7420] [--claude claude] [--token-file path] [--log-file path]
+      [--no-spawn] [--no-announce]
                                      MCP stdio stub run by the Claude Code plugin:
                                      starts an agent if none runs, announces the session
 

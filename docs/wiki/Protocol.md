@@ -1,6 +1,6 @@
 # Protocol
 
-The agent speaks JSON over HTTP plus one WebSocket endpoint. The Go types live in `internal/api/types.go`. Protocol version: `0.1.0`.
+The agent speaks JSON over HTTP plus one WebSocket endpoint. The Go types live in `internal/api/types.go`. The protocol isn't versioned separately; `GET /v1/health` reports the agent's build version.
 
 ## Auth
 

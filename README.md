@@ -12,9 +12,9 @@ laptop/3fa0c1  frontend  running  1        12m    C:\src\frontend
 One binary, two roles:
 
 - **agent**: runs on each machine, owns `claude` processes inside PTYs (ConPTY on Windows), keeps them alive while nobody is watching, and serves a small REST + WebSocket API.
-- **hub**: the `ls / new / attach / kill` commands, run from whichever terminal you're in.
+- **hub**: the `hosts / ls / new / attach / kill / web` commands, run from whichever terminal you're in.
 
-Full docs live in the [wiki](docs/wiki/Home.md); the landing page source is in https://varogonz95.github.io/clawsh/
+Full docs live in the [wiki](docs/wiki/Home.md); the landing page is https://varogonz95.github.io/clawsh/ (source in `site/index.html`)
 
 ## Setup
 
